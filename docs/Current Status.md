@@ -19,9 +19,13 @@
 - [x] Integrated "Why Murmur" branding story into the overview.
 - [x] **Slice 1:** Monorepo scaffolding completed (`packages/shared` build, `apps/api` Express 5 server with `/health`, `apps/web` React 19 Vite app).
 - [x] **Slice 1:** Verified workspace build (`pnpm build`), typecheck (`pnpm typecheck`), and `/health` route response.
+- [x] **Slice 2:** Supabase DB schema & connection initialized ([schema.ts](file:///e:/Projects/tasks/Murmur/apps/api/src/db/schema.ts), [index.ts](file:///e:/Projects/tasks/Murmur/apps/api/src/db/index.ts)).
+- [x] **Slice 2:** Auth middleware & `/me` route implemented ([auth.ts](file:///e:/Projects/tasks/Murmur/apps/api/src/middleware/auth.ts), [index.ts](file:///e:/Projects/tasks/Murmur/apps/api/src/index.ts)).
+- [x] **Slice 2:** Web client Supabase instance created ([supabase.ts](file:///e:/Projects/tasks/Murmur/apps/web/src/lib/supabase.ts)).
+- [x] **Slice 2:** Automated doc sync and clickable `file:///` link rule added to [.agents/rules/AGENT.md](file:///e:/Projects/tasks/Murmur/.agents/rules/AGENT.md).
 
 ### In Progress ➜
-- [ ] **Slice 2:** Supabase DB schema connection & Authentication layer setup.
+- [ ] **Slice 3:** Telegram bot connection & linking flow setup (`POST /me/telegram/link`, Grammy bot handler).
 
 ### Not Started 🗙
 - User registration and login auth flow.

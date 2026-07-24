@@ -56,7 +56,7 @@ To build a persistent, contextual presence, user prompts are sent alongside four
 
 ## Prompt Files & Templates
 
-Prompt templates reside in `packages/shared/src/prompts/index.ts`.
+Prompt templates reside in [prompts/index.ts](file:///e:/Projects/tasks/Murmur/packages/shared/src/prompts/index.ts).
 
 - **`SYSTEM_PROMPT`:** Establishes persona (supportive, agency-focused, career coach for placement-seeking students, no guilt or streaking rules, Indian student context).
 - **`DAILY_ACTION_PROMPT`:** Context for generating a daily task (takes 10–30 mins max, specific, achievable today).

@@ -10,7 +10,7 @@ PostgreSQL database hosted on **Supabase** using **Drizzle ORM** for schema decl
 
 ## Core Schema & Tables
 
-All schemas are defined in `apps/api/src/db/schema.ts`.
+All schemas are defined in [schema.ts](file:///e:/Projects/tasks/Murmur/apps/api/src/db/schema.ts).
 
 ### 1. `profiles`
 Extends user authentication profile with basic metadata and conversation contexts.
@@ -126,8 +126,8 @@ To protect database privacy, RLS is configured on all user-linked tables on Supa
 ## Database Migrations
 
 Migrations are managed with Drizzle Kit.
-- **Schema File:** `apps/api/src/db/schema.ts`
-- **Output Folder:** `apps/api/drizzle/`
+- **Schema File:** [schema.ts](file:///e:/Projects/tasks/Murmur/apps/api/src/db/schema.ts)
+- **Output Folder:** [drizzle/](file:///e:/Projects/tasks/Murmur/apps/api/drizzle)
 - **Generate Migration command:** `npx drizzle-kit generate`
 - **Apply Migration command:** `npx drizzle-kit migrate` or `supabase db push` (depending on local vs cloud deployment configuration).
 
