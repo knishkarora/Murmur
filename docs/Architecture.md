@@ -88,9 +88,9 @@ We prioritize using established libraries to reduce custom boilerplate.
 
 | Package | Deploy Target | Responsibility |
 |---------|---------------|----------------|
-| `apps/web` | **Vercel** | Dashboard, user registration/login, settings, insights, Supabase Realtime subscriptions |
-| `apps/api` | **Render (Web Service)** | Persistent Express server running Grammy Webhook and node-cron jobs |
-| `packages/shared` | — (Internal NPM) | Shared Zod schemas, TypeScript interfaces, prompt templates, env parser |
+| [`apps/web`](file:///e:/Projects/tasks/Murmur/apps/web) | **Vercel** | Dashboard, user registration/login, settings, insights, Supabase Realtime subscriptions |
+| [`apps/api`](file:///e:/Projects/tasks/Murmur/apps/api) | **Render (Web Service)** | Persistent Express server running Grammy Webhook and node-cron jobs |
+| [`packages/shared`](file:///e:/Projects/tasks/Murmur/packages/shared) | — (Internal NPM) | Shared Zod schemas, TypeScript interfaces, prompt templates, env parser |
 
 ---
 
@@ -137,7 +137,7 @@ All env variables are verified at application startup using Zod schemas defined 
 
 ### 1. Telegram Message Loop (Inbound)
 1. User sends message to Telegram Bot.
-2. Telegram Bot API hits `POST /webhooks/telegram` in `apps/api`.
+2. Telegram Bot API hits `POST /webhooks/telegram` in [apps/api](file:///e:/Projects/tasks/Murmur/apps/api).
 3. Check header verification secret and dedup via `webhook_events.update_id`.
 4. Fetch user profile and preferences from database.
 5. Retrieve 4-layer AI memory context (rolling summary, user facts, semantic search via `pgvector` on past embeddings).
@@ -147,7 +147,7 @@ All env variables are verified at application startup using Zod schemas defined 
 
 ### 2. Hybrid Dashboard Read/Write Pattern
 - **Reads (Direct Supabase):** Web app connects to Supabase client using RLS policies. It reads `messages` (via Realtime client), `weekly_summaries`, and `daily_actions`. This bypasses Express API server for faster read latency.
-- **Writes (API Gateway):** Creating links, editing timezone preferences, and custom operations request authentication tokens from Supabase Auth and execute via `POST / PATCH` requests to `apps/api` using Bearer JWT authorization.
+- **Writes (API Gateway):** Creating links, editing timezone preferences, and custom operations request authentication tokens from Supabase Auth and execute via `POST / PATCH` requests to [apps/api](file:///e:/Projects/tasks/Murmur/apps/api) using Bearer JWT authorization.
 
 ---
 

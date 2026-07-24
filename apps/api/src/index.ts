@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { env, logger } from "./config.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { requireAuth, type AuthedRequest } from "./middleware/auth.js";
 
 const app = express();
 
@@ -21,6 +22,14 @@ app.get("/health", (_req, res) => {
     status: "ok",
     service: "api",
     timestamp: new Date().toISOString(),
+  });
+});
+
+// Authenticated user check route
+app.get("/me", requireAuth, (req: AuthedRequest, res) => {
+  res.json({
+    status: "ok",
+    userId: req.userId,
   });
 });
 

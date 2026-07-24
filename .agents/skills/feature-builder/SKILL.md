@@ -24,5 +24,5 @@ Follow this step-by-step procedure for every code implementation or refactoring 
 3. Execute local linters, typechecks, or test suites (via MCP tools or terminal) to verify the build.
 
 ## Phase 4: Documentation & Hand-off
-1. Update affected files inside `/docs/` to reflect any schema modifications, new API routes, or updated parameters.
+1. Update affected files inside `/docs/` to reflect any schema modifications, new API routes, or updated parameters, ensuring all new/modified source files are linked via clickable `file:///` markdown links.
 2. Summarize the changes concisely for the user, highlighting modified files and any required manual testing steps.

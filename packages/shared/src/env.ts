@@ -3,6 +3,7 @@ import { z } from "zod";
 const serverEnvSchema = z.object({
   SUPABASE_URL: z.string().url().default("http://127.0.0.1:54321"),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).default("development_service_role_key_placeholder"),
+  DATABASE_URL: z.string().min(1).default("postgresql://postgres:postgres@127.0.0.1:54322/postgres"),
   GEMINI_API_KEY: z.string().min(1).default("development_gemini_api_key_placeholder"),
   TELEGRAM_BOT_TOKEN: z.string().min(1).default("development_telegram_bot_token_placeholder"),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(1).default("development_telegram_webhook_secret_placeholder"),

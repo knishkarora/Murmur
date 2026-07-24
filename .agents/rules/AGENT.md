@@ -31,6 +31,7 @@ You must adhere strictly to the tech stack, architecture, and design patterns es
 
 ## 5. Documentation-First & Sync Rule
 * **Doc Updates:** Every task that alters code, endpoints, database schemas, or workflows must update the corresponding `/docs` page in the same task.
+* **Clickable Code Mapping:** Whenever creating or modifying files, components, routes, schemas, or services, you MUST update `/docs` with clickable `file:///` scheme links pointing directly to the affected codebase files. This ensures future navigation by AI agents or human developers is instant without requiring whole-codebase scans.
 * **Milestone Logging:** Major architectural updates, completed phases, or structural deployments must be logged in `JOURNEY.md` (or the project's designated journey log).
 
 ## 6. Execution Safeguards

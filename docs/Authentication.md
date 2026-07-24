@@ -5,13 +5,13 @@
 ## Flow
 
 ### Registration / Login (web)
-1. User submits email + password on `apps/web`
+1. User submits email + password on [apps/web](file:///e:/Projects/tasks/Murmur/apps/web)
 2. `@supabase/supabase-js` calls `signUp` / `signInWithPassword`
 3. Session stored in browser; JWT available via `supabase.auth.getSession()`
 
 ### API requests (web → api)
 1. Web sends `Authorization: Bearer <access_token>`
-2. `apps/api` middleware calls `supabase.auth.getUser(token)`
+2. [apps/api](file:///e:/Projects/tasks/Murmur/apps/api) middleware [auth.ts](file:///e:/Projects/tasks/Murmur/apps/api/src/middleware/auth.ts) calls `supabase.auth.getUser(token)`
 3. Attaches `userId` to request context
 
 ### Telegram linking

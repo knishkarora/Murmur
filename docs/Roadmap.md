@@ -9,9 +9,9 @@ Milestones for Murmur's implementation path.
 ### Milestone 1: Foundations & Setup
 - [x] Establish documentation workspace & architectural wiki graph
 - [x] Configure `.agents/` operational rules (`AGENT.md`) & `JOURNEY.md`
-- [ ] Scaffold the monorepo structure (`pnpm` + `Turborepo` workspaces)
+- [x] Scaffold the monorepo structure (`pnpm` + `Turborepo` workspaces)
 - [ ] Initialize Supabase Postgres project, enable extensions (`pgvector`), and apply Drizzle schema migration
-- [ ] Build basic user authentication APIs (JWT validations and middleware)
+- [x] Build basic user authentication APIs (JWT validations and middleware)
 
 ### Milestone 2: Telegram Account Connection
 - [ ] Implement short-lived link token generator route (`POST /me/telegram/link`)
