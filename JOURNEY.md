@@ -31,3 +31,20 @@ Nothing yet — first milestone. Will revisit after Telegram + AI conversation l
 
 ### Evidence
 - Architecture diagram: `docs/journey-assets/` (to be added at first deploy)
+
+---
+
+## Entry 2 — Slice 1 Completed: Monorepo Foundation & Base Apps (2026-07-24)
+
+### What was accomplished
+- Built and exported `@companion/shared` with Zod schemas, prompt templates, and env validators.
+- Built Express 5 server entry in `@companion/api` hosting `GET /health` endpoint with Helmet, CORS, and Pino logger.
+- Scaffolded `@companion/web` React 19 + Vite 6 + TypeScript application displaying live API status.
+- Verified workspace dependencies (`pnpm install`), full build (`pnpm build`), typecheck (`pnpm typecheck`), and live `/health` response.
+
+### Why this mattered
+Establishes a clean, runnable, zero-error monorepo foundation that compiles and passes typechecks locally before introducing database and auth dependencies in Slice 2.
+
+### Decisions
+- Added dev fallbacks in env schema to allow offline local server startup prior to populating cloud API keys.
+
