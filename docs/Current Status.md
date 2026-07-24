@@ -1,11 +1,11 @@
 # Current Status
 
-**Last Updated:** 2026-07-21
+**Last Updated:** 2026-07-24
 
 ---
 
 ## Active Phase
-- **Phase 1 — Proof of Concept:** Milestone 1 (Foundations & Setup)
+- **Phase 1 — Proof of Concept:** Slice 1 Completed -> Moving to Slice 2 (Database Connection & Auth Layer)
 
 ---
 
@@ -17,10 +17,11 @@
 - [x] Restructured documentation workspace as a Single Source of Truth with Obsidian wiki links.
 - [x] Logged project kickoff entry in `JOURNEY.md`.
 - [x] Integrated "Why Murmur" branding story into the overview.
+- [x] **Slice 1:** Monorepo scaffolding completed (`packages/shared` build, `apps/api` Express 5 server with `/health`, `apps/web` React 19 Vite app).
+- [x] **Slice 1:** Verified workspace build (`pnpm build`), typecheck (`pnpm typecheck`), and `/health` route response.
 
 ### In Progress ➜
-- [ ] Monorepo scaffolding configuration (`apps/web`, `apps/api`, `packages/shared`).
-- [ ] Supabase project initialization and local configuration.
+- [ ] **Slice 2:** Supabase DB schema connection & Authentication layer setup.
 
 ### Not Started 🗙
 - User registration and login auth flow.
