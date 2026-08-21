@@ -56,7 +56,7 @@ To build a persistent, contextual presence, user prompts are sent alongside four
 
 ## Prompt Files & Templates
 
-Prompt templates reside in [prompts/index.ts](file:///e:/Projects/tasks/Murmur/packages/shared/src/prompts/index.ts).
+Prompt templates reside in [`prompts/index.ts`](../packages/shared/src/prompts/index.ts).
 
 - **`SYSTEM_PROMPT`:** Establishes persona (supportive, agency-focused, career coach for placement-seeking students, no guilt or streaking rules, Indian student context).
 - **`DAILY_ACTION_PROMPT`:** Context for generating a daily task (takes 10–30 mins max, specific, achievable today).
@@ -67,7 +67,7 @@ Prompt templates reside in [prompts/index.ts](file:///e:/Projects/tasks/Murmur/p
 
 ## AI Service functions
 
-The API server's [aiService.ts](file:///e:/Projects/tasks/Murmur/apps/api/src/services/aiService.ts) exports the following core methods:
+The API server's [`aiService.ts`](../apps/api/src/services/aiService.ts) exports the following core methods:
 
 1. **`generateReply(context, userMessage)`**
    - Assembles the 4 memory layers + user prompt, calls Gemini, and returns the response string.

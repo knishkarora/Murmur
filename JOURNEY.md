@@ -47,17 +47,17 @@ Establishes a clean, runnable, zero-error monorepo foundation that compiles and 
 
 ### Decisions
 - Added dev fallbacks in env schema to allow offline local server startup prior to populating cloud API keys.
-- Fully mapped the `/docs` folder using clickable `file:///` scheme links directly to the codebase directories, schema files, prompts, and middleware to make context discovery instant for future development.
+- Fully mapped the `/docs` folder using Obsidian wiki links and relative markdown links directly to the codebase directories, schema files, prompts, and middleware to make context discovery instant.
 
 ---
 
 ## Entry 3 — Slice 2 Completed: Database Connection & Auth Layer (2026-07-24)
 
 ### What was accomplished
-- Updated `.agents/rules/AGENT.md` and `feature-builder` skill instructions to make doc updates and clickable `file:///` link mapping a mandatory, automatic step for all future coding tasks.
-- Defined Drizzle Postgres database schemas in [schema.ts](file:///e:/Projects/tasks/Murmur/apps/api/src/db/schema.ts) covering all 12 tables and configured Drizzle ORM client connection in [index.ts](file:///e:/Projects/tasks/Murmur/apps/api/src/db/index.ts).
-- Configured Supabase Auth JWT verification middleware ([auth.ts](file:///e:/Projects/tasks/Murmur/apps/api/src/middleware/auth.ts)) and added the `/me` authenticated endpoint in [index.ts](file:///e:/Projects/tasks/Murmur/apps/api/src/index.ts).
-- Exported client-side Supabase instance in [supabase.ts](file:///e:/Projects/tasks/Murmur/apps/web/src/lib/supabase.ts) with `vite-env.d.ts` type safety.
+- Updated `.agents/rules/AGENT.md` and `feature-builder` skill instructions to require relative markdown links and wiki links for doc syncs (eliminating absolute `file:///` paths).
+- Defined Drizzle Postgres database schemas in `apps/api/src/db/schema.ts` covering all 12 tables and configured Drizzle ORM client connection in `apps/api/src/db/index.ts`.
+- Configured Supabase Auth JWT verification middleware (`apps/api/src/middleware/auth.ts`) and added the `/me` authenticated endpoint in `apps/api/src/index.ts`.
+- Exported client-side Supabase instance in `apps/web/src/lib/supabase.ts` with `vite-env.d.ts` type safety.
 - Verified monorepo typecheck (`pnpm typecheck`) and full production build (`pnpm build`).
 
 ### Why this mattered
