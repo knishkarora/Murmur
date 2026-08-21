@@ -4,7 +4,7 @@ REST API specifications for Murmur's Express application (`apps/api`).
 
 - **Base URL:** `VITE_API_URL` (Local: `http://localhost:3001` | Production: `https://api.yourdomain.com`)
 - **Format:** All requests and responses are JSON, except for binary/webhook payloads where specified.
-- **Request Validation:** Validated using `Zod` schemas defined in [schemas/index.ts](file:///e:/Projects/tasks/Murmur/packages/shared/src/schemas/index.ts).
+- **Request Validation:** Validated using `Zod` schemas defined in [`schemas/index.ts`](../packages/shared/src/schemas/index.ts).
 - **Authentication:** Authenticated requests require an `Authorization: Bearer <supabase_jwt>` header.
 
 ---

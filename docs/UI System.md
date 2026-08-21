@@ -1,6 +1,6 @@
 # UI System
 
-The user interface of Murmur ([apps/web](file:///e:/Projects/tasks/Murmur/apps/web)) is built as a single-page application (SPA) focused on clarity, responsiveness, and agency-reinforcing feedback.
+The user interface of Murmur ([`apps/web`](../apps/web)) is built as a single-page application (SPA) focused on clarity, responsiveness, and agency-reinforcing feedback.
 
 ---
 
