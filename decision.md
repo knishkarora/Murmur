@@ -22,3 +22,28 @@
   * Explicit `update_id` primary key lookup in `webhook_events` guarantees at-most-once processing even if Telegram re-sends webhooks due to network retries.
 * **Tradeoffs Accepted:** Extra database query per update packet, accepted for strict idempotency and zero duplicate message processing.
 * **Immutability Status:** Settled & Immutable.
+
+---
+
+## [2026-07-24] Decision: 4-Layer Context Memory Assembly & Vector Cosine Recall
+
+* **Context & Scope:** Building persistent, low-latency conversational AI memory for Gemini prompts (`gemini-2.0-flash`).
+* **Choice Made:** Combine 4 structured context layers (Short-term Buffer, Rolling Summary, Key-Value Facts, and `pgvector` HNSW Cosine Similarity search over `message_embeddings`).
+* **Rationale (Why over What):**
+  * Layering avoids sending raw full chat transcripts, minimizing token costs while preserving deep context.
+  * Combining vector cosine similarity search with structured KV facts ensures both semantic past context and hard personal facts (e.g. goals) are available to Gemini.
+* **Tradeoffs Accepted:** 768-dimension embedding generation adds ~100ms async delay, handled non-blocking in background.
+* **Immutability Status:** Settled & Immutable.
+
+---
+
+## [2026-07-24] Decision: Asynchronous Non-Blocking Memory Extraction & Summary Updates
+
+* **Context & Scope:** Extracting structured user facts into `user_memories` and updating `profiles.conversation_summary`.
+* **Choice Made:** Trigger memory extraction and conversation summarization asynchronously via background promises after the bot sends the reply to Telegram.
+* **Rationale (Why over What):**
+  * Prevents user reply latency from bloating. The user gets their AI response immediately without waiting for secondary LLM parsing calls.
+  * Extracted facts and summary updates are ready in the database before the user's next message arrives.
+* **Tradeoffs Accepted:** Micro-race condition if user messages faster than ~1s (rare in human chat), accepted for instant response delivery.
+* **Immutability Status:** Settled & Immutable.
+

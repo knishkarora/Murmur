@@ -77,5 +77,19 @@ Establishes a type-safe, database-ready backend with authenticated routes and cl
 ### Why this mattered
 Enables seamless, secure user account linking between web dashboard users and Telegram chats using single-use SHA-256 tokens, paving the way for AI conversational memory integration in Slice 4.
 
+---
+
+## Entry 5 — Slice 4 Completed: AI Conversational Core (2026-07-24)
+
+### What was accomplished
+- Created [`contextService.ts`](apps/api/src/services/contextService.ts) implementing the complete 4-layer memory pipeline (Short-term buffer, Rolling Summary, Structured Memories, and `pgvector` HNSW Cosine Similarity search over `message_embeddings`).
+- Attached `bot.on("message:text")` text listener in [`bot.ts`](apps/api/src/bot.ts) to intercept incoming Telegram messages, store messages in Postgres, call Gemini `gemini-2.0-flash`, persist AI responses, deliver replies via Grammy, and trigger background memory extraction.
+- Recorded decisions for memory pipeline layering and non-blocking background memory extractions in `decision.md`, and updated `flow.md`.
+- Verified 0 type errors (`pnpm typecheck`) and successful monorepo production build (`pnpm build`).
+
+### Why this mattered
+Completes the core conversational loop of Murmur: Telegram messages now trigger multi-layered context retrieval and Gemini responses, laying the groundwork for scheduled daily cron automations in Slice 5.
+
+
 
 

@@ -3,7 +3,13 @@ import crypto from "node:crypto";
 import { eq, and, gt, isNull } from "drizzle-orm";
 import { env, logger } from "./config.js";
 import { db } from "./db/index.js";
-import { linkTokens, telegramAccounts, profiles } from "./db/schema.js";
+import { linkTokens, telegramAccounts, profiles, messages } from "./db/schema.js";
+import { generateReply } from "./services/aiService.js";
+import {
+  assembleUserContext,
+  storeMessageEmbedding,
+  triggerMemoryExtractionAndSummary,
+} from "./services/contextService.js";
 
 export const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
 
@@ -89,6 +95,74 @@ bot.command("start", async (ctx) => {
     logger.error({ err }, "Error handling Telegram link command");
     await ctx.reply(
       "⚠️ An unexpected error occurred while linking your account. Please try again."
+    );
+  }
+});
+
+bot.on("message:text", async (ctx) => {
+  const telegramUserId = ctx.from.id;
+  const userText = ctx.message.text;
+
+  if (userText.startsWith("/")) return;
+
+  try {
+    const accounts = await db
+      .select({ userId: telegramAccounts.userId })
+      .from(telegramAccounts)
+      .where(eq(telegramAccounts.telegramUserId, telegramUserId))
+      .limit(1);
+
+    const [account] = accounts;
+    if (!account) {
+      await ctx.reply(
+        "👋 Welcome! Your Telegram account is not linked to Murmur yet. Please open your web dashboard and click 'Connect Telegram' to link your account."
+      );
+      return;
+    }
+
+    const userId = account.userId;
+
+    const [insertedUserMsg] = await db
+      .insert(messages)
+      .values({
+        userId,
+        role: "user",
+        content: userText,
+        createdAt: new Date(),
+      })
+      .returning({ id: messages.id });
+
+    if (insertedUserMsg) {
+      void storeMessageEmbedding(insertedUserMsg.id, userId, userText);
+    }
+
+    const aiContext = await assembleUserContext(userId, userText);
+    const aiReplyText = await generateReply(aiContext, userText);
+
+    const [insertedAiMsg] = await db
+      .insert(messages)
+      .values({
+        userId,
+        role: "assistant",
+        content: aiReplyText,
+        createdAt: new Date(),
+      })
+      .returning({ id: messages.id });
+
+    if (insertedAiMsg) {
+      void storeMessageEmbedding(insertedAiMsg.id, userId, aiReplyText);
+    }
+
+    await ctx.reply(aiReplyText);
+
+    void triggerMemoryExtractionAndSummary(userId);
+  } catch (err) {
+    logger.error(
+      { err, telegramUserId },
+      "Error handling incoming Telegram message"
+    );
+    await ctx.reply(
+      "I'm having a brief moment — please try again in a minute. Your progress still counts."
     );
   }
 });

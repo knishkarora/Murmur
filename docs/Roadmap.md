@@ -20,10 +20,10 @@ Milestones for Murmur's implementation path.
 - [x] Verify message ingestion database writes and webhook idempotency guards
 
 ### Milestone 3: AI Conversational Core
-- [ ] Construct the 4-layer context memory assembly pipeline
-- [ ] Program semantic vector query routines on database utilizing `pgvector` HNSW indexes
-- [ ] Implement Gemini service prompts and request wrappers (`gemini-2.0-flash`)
-- [ ] Establish message write triggers (realtime updates pipeline integration)
+- [x] Construct the 4-layer context memory assembly pipeline
+- [x] Program semantic vector query routines on database utilizing `pgvector` HNSW indexes
+- [x] Implement Gemini service prompts and request wrappers (`gemini-2.0-flash`)
+- [x] Establish message write triggers (realtime updates pipeline integration)
 
 ### Milestone 4: Cron Automations
 - [ ] Set up Express `node-cron` daemon process and timezone lookup queries

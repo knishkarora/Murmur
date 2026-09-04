@@ -5,7 +5,7 @@
 ---
 
 ## Active Phase
-- **Phase 1 — Proof of Concept:** Slice 2 Completed -> Slice 3 Completed -> Moving to Slice 4 (AI Conversational Core)
+- **Phase 1 — Proof of Concept:** Slice 3 Completed -> Slice 4 Completed -> Moving to Slice 5 (Cron Automations)
 
 ---
 
@@ -26,14 +26,14 @@
 - [x] **Slice 3:** Link token generation route implemented ([`telegram.ts`](../apps/api/src/routes/telegram.ts)).
 - [x] **Slice 3:** Grammy bot instance and `/start link_TOKEN` handler implemented ([`bot.ts`](../apps/api/src/bot.ts)).
 - [x] **Slice 3:** Webhook secret validation header & database update_id idempotency guard configured.
+- [x] **Slice 4:** 4-layer context memory assembly pipeline & pgvector cosine similarity recall implemented ([`contextService.ts`](../apps/api/src/services/contextService.ts)).
+- [x] **Slice 4:** Telegram text message listener wired to Gemini responses & background memory extractions ([`bot.ts`](../apps/api/src/bot.ts)).
 
 ### In Progress ➜
-- [ ] **Slice 4:** AI Conversational Core (4-layer context memory assembly & Gemini integration).
+- [ ] **Slice 5:** Cron Automations (daily morning action items & weekly summary reports).
 
 ### Not Started 🗙
 - User registration and login auth flow UI.
-- AI service integration (4-layer context memory assembly, Gemini prompts).
-- AI service integration (4-layer context memory assembly, Gemini prompts).
 - Cron scheduler.
 - React frontend dashboard UI.
 - Production deployment setup (Vercel & Render).
