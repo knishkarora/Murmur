@@ -5,7 +5,7 @@
 ---
 
 ## Active Phase
-- **Phase 1 — Proof of Concept:** Slice 1 Completed -> Moving to Slice 2 (Database Connection & Auth Layer)
+- **Phase 1 — Proof of Concept:** Slice 2 Completed -> Slice 3 Completed -> Moving to Slice 4 (AI Conversational Core)
 
 ---
 
@@ -23,13 +23,16 @@
 - [x] **Slice 2:** Auth middleware & `/me` route implemented ([`auth.ts`](../apps/api/src/middleware/auth.ts), [`index.ts`](../apps/api/src/index.ts)).
 - [x] **Slice 2:** Web client Supabase instance created ([`supabase.ts`](../apps/web/src/lib/supabase.ts)).
 - [x] **Slice 2:** Automated doc sync and relative link rule added to [`.agents/rules/AGENT.md`](../.agents/rules/AGENT.md).
+- [x] **Slice 3:** Link token generation route implemented ([`telegram.ts`](../apps/api/src/routes/telegram.ts)).
+- [x] **Slice 3:** Grammy bot instance and `/start link_TOKEN` handler implemented ([`bot.ts`](../apps/api/src/bot.ts)).
+- [x] **Slice 3:** Webhook secret validation header & database update_id idempotency guard configured.
 
 ### In Progress ➜
-- [ ] **Slice 3:** Telegram bot connection & linking flow setup (`POST /me/telegram/link`, Grammy bot handler).
+- [ ] **Slice 4:** AI Conversational Core (4-layer context memory assembly & Gemini integration).
 
 ### Not Started 🗙
-- User registration and login auth flow.
-- Telegram bot connection (Grammy webhook, account linking).
+- User registration and login auth flow UI.
+- AI service integration (4-layer context memory assembly, Gemini prompts).
 - AI service integration (4-layer context memory assembly, Gemini prompts).
 - Cron scheduler.
 - React frontend dashboard UI.

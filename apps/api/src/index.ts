@@ -4,6 +4,7 @@ import helmet from "helmet";
 import { env, logger } from "./config.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { requireAuth, type AuthedRequest } from "./middleware/auth.js";
+import telegramRouter from "./routes/telegram.js";
 
 const app = express();
 
@@ -15,6 +16,9 @@ app.use(
   }),
 );
 app.use(express.json());
+
+// Telegram routes (link generation & webhook ingestion)
+app.use(telegramRouter);
 
 // Public health check route
 app.get("/health", (_req, res) => {

@@ -14,10 +14,10 @@ Milestones for Murmur's implementation path.
 - [x] Build basic user authentication APIs (JWT validations and middleware)
 
 ### Milestone 2: Telegram Account Connection
-- [ ] Implement short-lived link token generator route (`POST /me/telegram/link`)
-- [ ] Setup Grammy bot webhook endpoints and header verification middleware
-- [ ] Develop `/start link_TOKEN` bot command handler to store account links in the database
-- [ ] Verify message ingestion database writes and webhook idempotency guards
+- [x] Implement short-lived link token generator route (`POST /me/telegram/link`)
+- [x] Setup Grammy bot webhook endpoints and header verification middleware
+- [x] Develop `/start link_TOKEN` bot command handler to store account links in the database
+- [x] Verify message ingestion database writes and webhook idempotency guards
 
 ### Milestone 3: AI Conversational Core
 - [ ] Construct the 4-layer context memory assembly pipeline

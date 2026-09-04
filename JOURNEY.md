@@ -63,4 +63,19 @@ Establishes a clean, runnable, zero-error monorepo foundation that compiles and 
 ### Why this mattered
 Establishes a type-safe, database-ready backend with authenticated routes and client auth helpers, laying the groundwork for Telegram account linking and user onboarding in Slice 3.
 
+---
+
+## Entry 4 — Slice 3 Completed: Telegram Account Connection & Linking Flow (2026-07-24)
+
+### What was accomplished
+- Added `TELEGRAM_BOT_USERNAME` configuration to `@companion/shared` env validators.
+- Implemented authenticated `POST /me/telegram/link` route to generate 15-minute SHA-256 link tokens and returned formatted deep links (`https://t.me/<BotUsername>?start=link_TOKEN`).
+- Created Grammy Bot instance and `/start link_TOKEN` handler ([`bot.ts`](apps/api/src/bot.ts)) to verify tokens, upsert `telegram_accounts`, and set `onboardingDone = true`.
+- Configured public webhook route (`POST /webhooks/telegram` in [`telegram.ts`](apps/api/src/routes/telegram.ts)) with secret header verification (`X-Telegram-Bot-Api-Secret-Token`) and database idempotency guard via `webhook_events`.
+- Documented execution sequence in `flow.md` and recorded architectural rationale in `decision.md`.
+
+### Why this mattered
+Enables seamless, secure user account linking between web dashboard users and Telegram chats using single-use SHA-256 tokens, paving the way for AI conversational memory integration in Slice 4.
+
+
 
