@@ -82,12 +82,25 @@ export async function generateDailyAction(context: AiContext): Promise<string> {
   const prompt = [SYSTEM_PROMPT, "", DAILY_ACTION_PROMPT, "", buildPrompt(context, "What should I do today?")].join(
     "\n",
   );
-  return callGemini(prompt);
+  try {
+    return await callGemini(prompt);
+  } catch (err) {
+    logger.error({ err }, "Gemini daily action generation failed");
+    return "Spend 15 minutes today reviewing your primary resume project or practicing one core technical concept.";
+  }
 }
 
-export async function generateWeeklySummary(context: AiContext): Promise<string> {
-  const prompt = [SYSTEM_PROMPT, "", WEEKLY_SUMMARY_PROMPT, "", buildPrompt(context, "Summarize my week.")].join("\n");
-  return callGemini(prompt);
+export async function generateWeeklySummary(context: AiContext, summaryStats?: string): Promise<string> {
+  const requestText = summaryStats
+    ? `Summarize my week. Here are my recorded actions for this past week:\n${summaryStats}`
+    : "Summarize my week.";
+  const prompt = [SYSTEM_PROMPT, "", WEEKLY_SUMMARY_PROMPT, "", buildPrompt(context, requestText)].join("\n");
+  try {
+    return await callGemini(prompt);
+  } catch (err) {
+    logger.error({ err }, "Gemini weekly summary generation failed");
+    return "Great effort this past week. Every consistent step, no matter how small, compounds toward your placement goals.";
+  }
 }
 
 export async function extractMemories(recentText: string): Promise<{ key: string; value: string }[]> {

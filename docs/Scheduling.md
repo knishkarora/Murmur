@@ -1,6 +1,6 @@
 # Scheduling
 
-Murmur runs scheduled background cron processes using **node-cron** within the persistent backend environment ([`apps/api`](../apps/api)).
+Murmur runs scheduled background cron processes using **node-cron** within the persistent backend environment ([`apps/api`](../apps/api), [`cronService.ts`](../apps/api/src/services/cronService.ts)).
 
 ---
 

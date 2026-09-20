@@ -26,10 +26,10 @@ Milestones for Murmur's implementation path.
 - [x] Establish message write triggers (realtime updates pipeline integration)
 
 ### Milestone 4: Cron Automations
-- [ ] Set up Express `node-cron` daemon process and timezone lookup queries
-- [ ] Write morning job runner (`daily_morning`): pulls active timezone users and generates daily action items
-- [ ] Write summary job runner (`weekly_planner`): compiles completion stats and creates Sunday reports
-- [ ] Write database cleanup tasks (`memory_summarize` and `embedding_backfill`)
+- [x] Set up Express `node-cron` daemon process and timezone lookup queries
+- [x] Write morning job runner (`daily_morning`): pulls active timezone users and generates daily action items
+- [x] Write summary job runner (`weekly_planner`): compiles completion stats and creates Sunday reports
+- [x] Write database cleanup tasks (`memory_summarize` and `embedding_backfill`)
 
 ### Milestone 5: Web Dashboard Workspace
 - [ ] Build React pages (Landing, Onboarding details, Main Dashboard, Chat Archive, Settings)

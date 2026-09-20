@@ -90,6 +90,25 @@ Enables seamless, secure user account linking between web dashboard users and Te
 ### Why this mattered
 Completes the core conversational loop of Murmur: Telegram messages now trigger multi-layered context retrieval and Gemini responses, laying the groundwork for scheduled daily cron automations in Slice 5.
 
+---
+
+## Entry 6 — Slice 5 Completed: Cron Automations & Background Scheduling (2026-07-24)
+
+### What was accomplished
+- Created [`cronService.ts`](apps/api/src/services/cronService.ts) containing four background job runners:
+  - `runDailyMorningJob()`: Evaluates users on the hourly tick, translates their timezone using `date-fns-tz` to detect their configured `morningHour` (default 8 AM), atomically locks via `job_runs` (`onConflictDoNothing()`), generates an actionable micro-task via Gemini, records the task into `daily_actions`, and dispatches it to Telegram.
+  - `runWeeklyPlannerJob()`: Evaluates localized day and hour (Sunday 6 PM), aggregates completion stats from `daily_actions` over the past 7 days, generates an uplifting weekly summary via Gemini, stores in `weekly_summaries`, and delivers to Telegram.
+  - `runMemorySummarizeJob()`: Nightly maintenance job (2 AM UTC) running rolling conversation summarization for active message threads.
+  - `runEmbeddingBackfillJob()`: Nightly maintenance job (3 AM UTC) calculating and inserting 768-dim vector embeddings for any un-indexed messages.
+- Registered background daemon scheduler in [`index.ts`](apps/api/src/index.ts) triggered on server startup.
+- Updated `aiService.ts` to support optional completion statistics for weekly summaries and graceful error fallbacks.
+- Verified timezone offsets, `job_runs` idempotency guard, full monorepo typecheck (`npx pnpm typecheck`), and production build (`npx pnpm build`).
+- Synchronized `decision.md`, `flow.md`, and `/docs` knowledge graph (`Current Status.md`, `Roadmap.md`, `Scheduling.md`).
+
+### Why this mattered
+Murmur is no longer a purely reactive chatbot; it now actively reaches out to users each morning with focused action tasks and every Sunday with celebrating reflections, without requiring Redis or extra infrastructure.
+
+
 
 
 

@@ -5,7 +5,7 @@
 ---
 
 ## Active Phase
-- **Phase 1 — Proof of Concept:** Slice 3 Completed -> Slice 4 Completed -> Moving to Slice 5 (Cron Automations)
+- **Phase 1 — Proof of Concept:** Slice 4 Completed -> Slice 5 Completed -> Moving to Slice 6 (Web Dashboard Workspace)
 
 ---
 
@@ -28,13 +28,12 @@
 - [x] **Slice 3:** Webhook secret validation header & database update_id idempotency guard configured.
 - [x] **Slice 4:** 4-layer context memory assembly pipeline & pgvector cosine similarity recall implemented ([`contextService.ts`](../apps/api/src/services/contextService.ts)).
 - [x] **Slice 4:** Telegram text message listener wired to Gemini responses & background memory extractions ([`bot.ts`](../apps/api/src/bot.ts)).
+- [x] **Slice 5:** Cron automations implemented ([`cronService.ts`](../apps/api/src/services/cronService.ts), [`index.ts`](../apps/api/src/index.ts)): hourly runner evaluating localized timezones (`date-fns-tz`) for `daily_morning` actions and Sunday `weekly_planner` summaries, at-most-once locking via `job_runs`, nightly `memory_summarize`, and `embedding_backfill`.
 
 ### In Progress ➜
-- [ ] **Slice 5:** Cron Automations (daily morning action items & weekly summary reports).
+- [ ] **Slice 6:** Web Dashboard Workspace (User registration/login auth flow UI, dashboard views, action cards, and realtime updates).
 
 ### Not Started 🗙
-- User registration and login auth flow UI.
-- Cron scheduler.
 - React frontend dashboard UI.
 - Production deployment setup (Vercel & Render).
 

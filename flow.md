@@ -71,3 +71,45 @@ This document tracks execution flows across application boundaries in Murmur.
 - `[NEW]` [`apps/api/src/services/contextService.ts`](apps/api/src/services/contextService.ts): 4-layer context memory assembly, pgvector cosine queries, and background memory extract trigger.
 - `[MODIFY]` [`apps/api/src/bot.ts`](apps/api/src/bot.ts): Added `bot.on("message:text")` listener wiring memory assembly and AI generation to Telegram replies.
 
+---
+
+## 3. Scheduled Background Cron Automations Flow
+
+### Entry Points
+- `node-cron` daemon triggers:
+  - Hourly at `:00` (`0 * * * *`): Evaluates `runDailyMorningJob()` and `runWeeklyPlannerJob()`.
+  - Nightly at `02:00 UTC` (`0 2 * * *`): Evaluates `runMemorySummarizeJob()`.
+  - Nightly at `03:00 UTC` (`0 3 * * *`): Evaluates `runEmbeddingBackfillJob()`.
+
+### Execution Sequences
+
+#### A. Daily Morning Action Flow (`daily_morning`)
+1. **[api] Scheduler Tick ([`cronService.ts`](apps/api/src/services/cronService.ts)):** Hourly runner pulls candidate users with their `profiles`, `user_preferences`, and `telegram_accounts`.
+2. **[api] Timezone Evaluation:** Uses `toZonedTime(now, timezone)` and `formatInTimeZone` to resolve localized hour and `YYYY-MM-DD` date string. Filters for users where `localHour === morningHour` (default 8 AM).
+3. **[db] Idempotency Lock:** Executes `INSERT INTO job_runs (job_type, user_id, run_date) VALUES ('daily_morning', userId, localDateStr) ON CONFLICT DO NOTHING RETURNING id;`. If conflict occurs (already executed today), runner aborts execution for this user.
+4. **[api] AI Context Assembly & Generation:** Calls `assembleUserContext(userId, "What should I do today?")` and generates action recommendation using `generateDailyAction()`.
+5. **[db] Persistence:** Inserts generated action into `daily_actions` (`status: 'pending'`, `scheduledFor: now`).
+6. **[telegram] Message Dispatch:** Sends recommendation to user's Telegram chat via `bot.api.sendMessage(chatId, message, { parse_mode: 'Markdown' })` with plain text fallback on markdown parsing error.
+
+#### B. Weekly Planner & Summary Flow (`weekly_planner`)
+1. **[api] Timezone & Day Evaluation:** Checks if `localDay === weeklyDay` (Sunday = 0) and `localHour === 18` (6 PM).
+2. **[db] Idempotency Lock:** Inserts record into `job_runs` with `job_type = 'weekly_planner'` and `run_date = localDateStr`. Skips if conflict.
+3. **[db] Stats Compilation:** Queries `daily_actions` for user in the past 7 days to calculate total and completed micro-tasks.
+4. **[api] AI Summary Generation:** Invokes `generateWeeklySummary(context, statsSummary)` with Gemini `gemini-2.0-flash`.
+5. **[db] Persistence:** Inserts record into `weekly_summaries` (`weekStart`, `content`).
+6. **[telegram] Message Dispatch:** Delivers Sunday summary report via `bot.api.sendMessage(chatId, markdownSummary)`.
+
+#### C. Nightly Maintenance Flows
+1. **Memory Summarization (`memory_summarize` at 2 AM UTC):** Queries distinct users from `messages` and invokes `triggerMemoryExtractionAndSummary(userId)` to refresh rolling summaries.
+2. **Embedding Backfill (`embedding_backfill` at 3 AM UTC):** Queries messages lacking embeddings (`LEFT JOIN message_embeddings WHERE id IS NULL LIMIT 50`), calculates 768-dim embeddings via `embedText()`, and inserts into `message_embeddings`.
+
+### Modified Scope (Slice 5)
+- `[NEW]` [`apps/api/src/services/cronService.ts`](apps/api/src/services/cronService.ts): Cron runner implementations and `initScheduler()`.
+- `[MODIFY]` [`apps/api/src/services/aiService.ts`](apps/api/src/services/aiService.ts): Graceful fallback wrappers and weekly statistics support for `generateWeeklySummary`.
+- `[MODIFY]` [`apps/api/src/index.ts`](apps/api/src/index.ts): Scheduler daemon initialization on API server startup.
+
+### Cross-Boundary Data Transformations
+- **Timezone Offsets:** Date timestamps converted from UTC system clock to user local hour integers (`0-23`) and date keys (`YYYY-MM-DD`) via `date-fns-tz`.
+- **Completion Stats Aggregation:** Array of `daily_actions` mapped to Markdown bullet list passed directly into Gemini generation prompt.
+
+

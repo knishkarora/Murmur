@@ -18,6 +18,9 @@ export const userPreferencesSchema = z.object({
   tone: z.enum(["friendly", "direct", "encouraging"]).default("friendly"),
 });
 
+export const updatePreferencesSchema = userPreferencesSchema.omit({ userId: true }).partial();
+export type UpdatePreferences = z.infer<typeof updatePreferencesSchema>;
+
 export const messageSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),

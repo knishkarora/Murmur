@@ -47,3 +47,29 @@
 * **Tradeoffs Accepted:** Micro-race condition if user messages faster than ~1s (rare in human chat), accepted for instant response delivery.
 * **Immutability Status:** Settled & Immutable.
 
+---
+
+## [2026-07-24] Decision: Database-Driven At-Most-Once Locking via `job_runs` Table
+
+* **Context & Scope:** Managing scheduled hourly cron executions for `daily_morning` and `weekly_planner` background jobs without dedicated distributed locks (Redis/Redlock).
+* **Choice Made:** Atomic `INSERT INTO job_runs (job_type, user_id, run_date) VALUES (...) ON CONFLICT DO NOTHING RETURNING id;` using unique composite index `(job_type, user_id, run_date)`.
+* **Rationale (Why over What):**
+  * Avoids introducing external broker dependencies (Redis, BullMQ) for a single-server POC.
+  * Guarantees at-most-once delivery per user per day, even across server restarts or rapid scheduler ticks.
+  * If the row cannot be inserted due to conflict, the job runner immediately skips the user without triggering LLM calls or dispatching redundant Telegram messages.
+* **Tradeoffs Accepted:** Additional DB roundtrip per candidate user, fully acceptable given small student cohorts and persistent PostgreSQL connection.
+* **Immutability Status:** Settled & Immutable.
+
+---
+
+## [2026-07-24] Decision: Hourly Polling with `date-fns-tz` for Multi-Timezone Delivery
+
+* **Context & Scope:** Delivering morning actions and Sunday summaries to users in different timezones at their preferred local hour.
+* **Choice Made:** Run an hourly cron job (`0 * * * *`) that translates UTC `now` into each candidate user's configured timezone using `date-fns-tz`, matching against their preferred `morningHour` (default 8 AM) or Sunday 18:00 (6 PM).
+* **Rationale (Why over What):**
+  * Express server runs on a single persistent server clock (UTC); users reside across varying offsets (`Asia/Kolkata`, `America/New_York`, etc.).
+  * Translating per-user on the hourly tick decouples server clock timezone from user localized time without needing complex per-user dynamic cron registrations.
+* **Tradeoffs Accepted:** Hourly query evaluates all active profiles, trivial workload for Postgres.
+* **Immutability Status:** Settled & Immutable.
+
+

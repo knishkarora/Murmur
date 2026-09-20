@@ -12,14 +12,20 @@ Follow this procedure to verify user comprehension before finalizing any complex
 * Before accepting complex changes spanning multiple files or modules.
 * Whenever critical architectural or algorithmic changes are introduced.
 
-## 2. Step 1: Comprehension Quiz / Verification
+## 2. Step 1: Pre-Quiz Architectural Briefing ("What & Why")
+1. Before presenting any questions, first provide a clear, concise educational summary covering:
+   * **What was implemented:** The files created/modified, runtime responsibilities, and components involved.
+   * **Why it was built this way:** The architectural reasoning, design patterns chosen, problem being solved, and tradeoffs accepted.
+2. Structure this explanation clearly with headings so the user has the complete mental model before being tested.
+
+## 3. Step 2: Comprehension Quiz / Verification
 1. Do NOT declare the task finished or assume documentation is sufficient.
-2. Present 2-3 targeted questions or a short quiz asking the user to explain:
+2. Present 2-3 targeted questions asking the user to explain:
    * What the newly written code actually does in terms of runtime behavior.
    * How data flows through the modified components.
    * Why key implementation choices or conditional branches were structured this way.
 
-## 3. Step 2: Evaluation & Gating
+## 4. Step 3: Evaluation & Gating
 * **Scenario A: User Answers Correctly**
   * The user demonstrates accurate understanding in their own words.
   * **Action:** Pass the gate and proceed to final task wrap-up / completion.
@@ -28,14 +34,14 @@ Follow this procedure to verify user comprehension before finalizing any complex
   * The user is confused, unsure, or unable to articulate the core concepts.
   * **Action:** **HALT THE IMPLEMENTATION IMMEDIATELY.** Do not finalize or move to the next task.
 
-## 4. Step 3: Remediation & Teaching (When Gate Fails)
+## 5. Step 4: Remediation & Teaching (When Gate Fails)
 1. Deconstruct the complex concepts into plain, step-by-step explanations.
 2. Provide concrete analogies or line-by-line visual walkthroughs of the execution.
 3. Address the specific knowledge gaps exposed during the quiz.
 4. Prepare the user to understand the mechanisms completely.
 
-## 5. Step 4: Mandatory Re-Testing
+## 6. Step 5: Mandatory Re-Testing
 1. Once the explanation is complete, present a **new set of targeted questions** covering the missing knowledge.
 2. Evaluate the user's response again.
-3. Repeat Steps 3 & 4 as many times as necessary until the user proves genuine understanding.
+3. Repeat Steps 4 & 5 as many times as necessary until the user proves genuine understanding.
 4. **STRICT RULE:** You are strictly forbidden from skipping this gate or proceeding without verified comprehension.
