@@ -112,4 +112,63 @@ This document tracks execution flows across application boundaries in Murmur.
 - **Timezone Offsets:** Date timestamps converted from UTC system clock to user local hour integers (`0-23`) and date keys (`YYYY-MM-DD`) via `date-fns-tz`.
 - **Completion Stats Aggregation:** Array of `daily_actions` mapped to Markdown bullet list passed directly into Gemini generation prompt.
 
+---
+
+## 4. Web Dashboard Workspace Execution & Realtime Live Synchronization Flow
+
+### Entry Points
+- **Client Route Navigation:** Browser hits `/` (Landing), `/onboarding` (Setup), `/dashboard` (Workspace), `/conversations` (Chat), `/insights` (Analytics), or `/settings` (Preferences).
+- **Interactive User Mutation:** Check off daily action, create focus task, send chat prompt, or update notification schedule.
+
+### Execution Sequences
+
+#### A. Authentication & Workspace Protection
+1. **[web] Session Evaluation ([`authContext.tsx`](apps/web/src/lib/authContext.tsx)):** Reads `murmur_demo_token` from localStorage or evaluates `supabase.auth.getSession()`.
+2. **[web] Guard Check ([`ProtectedRoute.tsx`](apps/web/src/components/ProtectedRoute.tsx)):**
+   - If unauthenticated -> Redirects to `/`.
+   - If authenticated but `profile.onboardingDone === false` and not on `/onboarding` -> Redirects to `/onboarding`.
+   - If onboarded -> Renders target view wrapped in `Layout`.
+
+#### B. Data Hydration & Server State Management
+1. **[web] API Dispatch ([`api.ts`](apps/web/src/lib/api.ts)):** Attaches `Authorization: Bearer <token>` and proxies requests through Vite `/api` to Express backend.
+2. **[api] Authenticated Query Execution:**
+   - `GET /me/profile`: Resolves combined `profiles`, `user_preferences`, and `telegram_accounts` link status.
+   - `GET /me/actions`: Returns 50 most recent micro-actions ordered by `scheduledFor desc`.
+   - `GET /me/messages`: Returns historical chat transcript for conversational display.
+   - `GET /me/summaries`: Returns Sunday Markdown summaries.
+   - `GET /me/memories`: Returns Gemini-extracted KV fact cards.
+3. **[web] React Query Cache ([`queries.ts`](apps/web/src/lib/queries.ts)):** Caches results in TanStack Query with configured `staleTime`.
+
+#### C. Realtime Live Synchronization Loop
+1. **[web] Channel Attachment ([`realtime.ts`](apps/web/src/lib/realtime.ts)):** Attaches Supabase Realtime channel listeners to Postgres changes on `messages` and `daily_actions` filtered by `user_id=eq.${userId}`.
+2. **[api / telegram] Background Row Write:** When Grammy bot receives a Telegram message or cron runner inserts a daily action:
+3. **[supabase] Event Broadcast:** Supabase Realtime engine pushes websocket delta event to client.
+4. **[web] Cache Invalidation:** `queryClient.invalidateQueries({ queryKey: ['messages'] })` or `queryKey: ['actions']` fires, immediately refreshing the UI without manual page reloads.
+
+#### D. In-Dashboard Web Chat Mutation
+1. **[web] User Submits Chat Input ([`ConversationsPage.tsx`](apps/web/src/pages/ConversationsPage.tsx)):** Calls `useSendMessage` -> `POST /me/messages`.
+2. **[api] Conversational Pipeline ([`conversations.ts`](apps/api/src/routes/conversations.ts)):**
+   - Persists user message row and initiates background vector embedding.
+   - Executes 4-layer context memory assembly (`assembleUserContext`).
+   - Invokes Gemini `generateReply` with prompt.
+   - Persists assistant reply row and starts background memory extraction (`triggerMemoryExtractionAndSummary`).
+   - Returns `{ userMessage, assistantMessage }` immediately to web client.
+
+### Modified Scope (Slice 6)
+- `[NEW]` [`apps/api/src/routes/profile.ts`](apps/api/src/routes/profile.ts): Combined profile, preferences, and telegram status.
+- `[NEW]` [`apps/api/src/routes/actions.ts`](apps/api/src/routes/actions.ts): Daily action creation, listing, and toggle completion.
+- `[NEW]` [`apps/api/src/routes/conversations.ts`](apps/api/src/routes/conversations.ts): Chat message retrieval and web prompting.
+- `[NEW]` [`apps/api/src/routes/summaries.ts`](apps/api/src/routes/summaries.ts): Sunday summary reports retrieval.
+- `[NEW]` [`apps/api/src/routes/memories.ts`](apps/api/src/routes/memories.ts): Structured memory facts retrieval.
+- `[MODIFY]` [`apps/api/src/index.ts`](apps/api/src/index.ts): Router registrations.
+- `[NEW]` [`apps/web/src/lib/api.ts`](apps/web/src/lib/api.ts), [`authContext.tsx`](apps/web/src/lib/authContext.tsx), [`realtime.ts`](apps/web/src/lib/realtime.ts), [`queries.ts`](apps/web/src/lib/queries.ts).
+- `[NEW]` [`apps/web/src/components/Layout.tsx`](apps/web/src/components/Layout.tsx), [`ProtectedRoute.tsx`](apps/web/src/components/ProtectedRoute.tsx).
+- `[NEW]` [`apps/web/src/pages/LandingPage.tsx`](apps/web/src/pages/LandingPage.tsx), [`OnboardingPage.tsx`](apps/web/src/pages/OnboardingPage.tsx), [`DashboardPage.tsx`](apps/web/src/pages/DashboardPage.tsx), [`ConversationsPage.tsx`](apps/web/src/pages/ConversationsPage.tsx), [`InsightsPage.tsx`](apps/web/src/pages/InsightsPage.tsx), [`SettingsPage.tsx`](apps/web/src/pages/SettingsPage.tsx).
+- `[MODIFY]` [`apps/web/src/App.tsx`](apps/web/src/App.tsx), [`vite.config.ts`](apps/web/vite.config.ts), [`index.css`](apps/web/src/index.css).
+
+### Cross-Boundary Data Transformations
+- **Auth Token Propagation:** Supabase Auth JWT / local demo token passed via `Authorization: Bearer <token>` on all API requests.
+- **7-Day Chart Bucket Aggregation:** Array of `daily_actions` reduced into day-name buckets (`Sun-Sat`) and counted for Recharts visualization.
+
+
 

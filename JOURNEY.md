@@ -108,6 +108,33 @@ Completes the core conversational loop of Murmur: Telegram messages now trigger 
 ### Why this mattered
 Murmur is no longer a purely reactive chatbot; it now actively reaches out to users each morning with focused action tasks and every Sunday with celebrating reflections, without requiring Redis or extra infrastructure.
 
+---
+
+## Entry 7 — Slice 6 Completed: Web Dashboard Workspace & Realtime Sync (2026-07-24)
+
+### What was accomplished
+- Implemented the complete Web Dashboard single-page application ([`apps/web`](apps/web)) across 6 core views:
+  - **Landing / Auth (`/`)**: Product philosophy introduction, tabbed Email/Password signup/login, and Instant Demo session fallback.
+  - **User Onboarding (`/onboarding`)**: Profile customization (name, IANA timezone selector), and Telegram bot deep link card.
+  - **Main Dashboard (`/dashboard`)**: Today's primary action card with agency-reinforcing checkbox completion toggle, recent action history with status filters (All, Pending, Done), and instant custom action creation.
+  - **Conversations Archive (`/conversations`)**: Chat transcript viewer with distinct user/assistant visual speech bubbles, search filter, live synchronization status, and direct web chat prompt input.
+  - **Weekly Insights (`/insights`)**: Interactive 7-day activity completion chart rendered via `Recharts`, Sunday report archive, and PostgreSQL `user_memories` KV bank cards.
+  - **Settings (`/settings`)**: Delivery schedule configuration (morning action delivery hour, evening reflection target), assistant tone selector (Friendly, Direct, Encouraging), timezone picker, and Telegram bot linking management with Sonner toast feedback.
+- Configured TanStack Query (`@tanstack/react-query`) server state management with optimistic cache invalidation.
+- Attached Supabase Realtime channel listeners ([`realtime.ts`](apps/web/src/lib/realtime.ts)) to `messages` and `daily_actions`, automatically re-fetching canonical data when Telegram or cron jobs create or update records.
+- Built supporting Express 5 backend endpoints ([`apps/api/src/routes`](apps/api/src/routes)):
+  - `GET /me/profile`, `PATCH /me/profile`: User profile, preferences, and Telegram link status.
+  - `GET /me/actions`, `POST /me/actions`, `PATCH /me/actions/:id`, `POST /me/actions/:id/complete`: Action management.
+  - `GET /me/messages`, `POST /me/messages`: Message history and in-dashboard Gemini conversational AI prompting.
+  - `GET /me/summaries`: Weekly Sunday reports retrieval.
+  - `GET /me/memories`: Structured memory facts retrieval.
+- Verified 0 type errors across all packages (`npx pnpm typecheck`) and full production build (`npx pnpm build`).
+- Synchronized `/docs` (`Current Status.md`, `Roadmap.md`), `decision.md`, and `flow.md`.
+
+### Why this mattered
+Murmur now provides a complete, modern visual workspace alongside its Telegram interface. Users can inspect their entire conversational memory, track their daily progress, analyze weekly momentum, and adjust assistant behavior seamlessly in real time.
+
+
 
 
 

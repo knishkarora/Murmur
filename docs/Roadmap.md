@@ -32,10 +32,10 @@ Milestones for Murmur's implementation path.
 - [x] Write database cleanup tasks (`memory_summarize` and `embedding_backfill`)
 
 ### Milestone 5: Web Dashboard Workspace
-- [ ] Build React pages (Landing, Onboarding details, Main Dashboard, Chat Archive, Settings)
-- [ ] Integrate TanStack Query server state hydration
-- [ ] Connect Supabase Realtime client message subscriptions for chat updates
-- [ ] Render analytics logs utilizing Recharts
+- [x] Build React pages (Landing, Onboarding details, Main Dashboard, Chat Archive, Insights, Settings)
+- [x] Integrate TanStack Query server state hydration
+- [x] Connect Supabase Realtime client message subscriptions for chat updates
+- [x] Render analytics logs utilizing Recharts
 
 ### Milestone 6: Deployment & Launch
 - [ ] Configure Vercel static deployments for `apps/web`

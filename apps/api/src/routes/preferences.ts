@@ -7,11 +7,22 @@ import { userPreferences } from "../db/schema.js";
 import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
 import { logger } from "../config.js";
 
+import { devMockStore } from "../db/devStore.js";
+
 const router = Router();
 
 // GET /me/preferences: Fetch notification and schedule preferences
 router.get("/me/preferences", requireAuth, async (req: AuthedRequest, res, next) => {
   const userId = req.userId!;
+
+  if (userId === "00000000-0000-0000-0000-000000000001") {
+    res.json({
+      status: "ok",
+      preferences: devMockStore.preferences,
+    });
+    return;
+  }
+
   try {
     const existing = await db
       .select()
@@ -54,6 +65,15 @@ router.patch("/me/preferences", requireAuth, async (req: AuthedRequest, res, nex
       status: "error",
       message: "Invalid preferences format",
       errors: parsed.error.issues,
+    });
+    return;
+  }
+
+  if (userId === "00000000-0000-0000-0000-000000000001") {
+    Object.assign(devMockStore.preferences, parsed.data);
+    res.json({
+      status: "ok",
+      preferences: devMockStore.preferences,
     });
     return;
   }

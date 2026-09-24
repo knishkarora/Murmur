@@ -72,4 +72,30 @@
 * **Tradeoffs Accepted:** Hourly query evaluates all active profiles, trivial workload for Postgres.
 * **Immutability Status:** Settled & Immutable.
 
+---
+
+## [2026-07-24] Decision: Hybrid Server State via TanStack Query with Supabase Realtime Cache Invalidation
+
+* **Context & Scope:** Managing client UI reactivity for chat transcripts, daily action updates, and Sunday reports across Web and Telegram interfaces.
+* **Choice Made:** Leverage TanStack Query (`@tanstack/react-query`) as the primary data fetch and caching layer, combined with a background Supabase Realtime channel listener that invalidates targeted query keys (`['messages']`, `['actions']`) on incoming database changes.
+* **Rationale (Why over What):**
+  * Avoids complex manual websocket state stitching and duplicate in-memory store reconciliations.
+  * Guarantees that whether an action or message is created in Telegram (via bot) or on the Web, the UI re-fetches the authoritative canonical state cleanly.
+  * TanStack Query manages query deduplication, loading boundaries, and stale-time caching out of the box.
+* **Tradeoffs Accepted:** Extra network roundtrip when Supabase Realtime invalidates cache, negligible overhead for instantaneous accuracy.
+* **Immutability Status:** Settled & Immutable.
+
+---
+
+## [2026-07-24] Decision: Dual-Mode Auth (Supabase Client + Local Demo Fallback)
+
+* **Context & Scope:** Allowing full interactive testing of all 6 web dashboard views both with live Supabase credentials and in disconnected local development environments.
+* **Choice Made:** Provide standard Supabase Auth with an immediate "Demo Session" fallback that assigns a deterministic mock UUID and sets `murmur_demo_token`, accepted by the development Express backend auth middleware.
+* **Rationale (Why over What):**
+  * Prevents frontend development and verification from blocking when local environment variables are placeholders.
+  * Allows end-to-end evaluation of the entire dashboard, onboarding, chat, insights, and settings flows without cloud dependencies.
+* **Tradeoffs Accepted:** Mock user ID in dev mode; strictly disabled in production.
+* **Immutability Status:** Settled & Immutable.
+
+
 

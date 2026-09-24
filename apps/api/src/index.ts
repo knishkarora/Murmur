@@ -6,6 +6,11 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import { requireAuth, type AuthedRequest } from "./middleware/auth.js";
 import telegramRouter from "./routes/telegram.js";
 import preferencesRouter from "./routes/preferences.js";
+import profileRouter from "./routes/profile.js";
+import actionsRouter from "./routes/actions.js";
+import conversationsRouter from "./routes/conversations.js";
+import summariesRouter from "./routes/summaries.js";
+import memoriesRouter from "./routes/memories.js";
 import { initScheduler } from "./services/cronService.js";
 
 const app = express();
@@ -19,11 +24,14 @@ app.use(
 );
 app.use(express.json());
 
-// Telegram routes (link generation & webhook ingestion)
+// API routes
 app.use(telegramRouter);
-
-// User preferences routes
 app.use(preferencesRouter);
+app.use(profileRouter);
+app.use(actionsRouter);
+app.use(conversationsRouter);
+app.use(summariesRouter);
+app.use(memoriesRouter);
 
 // Public health check route
 app.get("/health", (_req, res) => {

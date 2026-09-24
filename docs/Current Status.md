@@ -5,7 +5,7 @@
 ---
 
 ## Active Phase
-- **Phase 1 — Proof of Concept:** Slice 4 Completed -> Slice 5 Completed -> Moving to Slice 6 (Web Dashboard Workspace)
+- **Phase 1 — Proof of Concept:** Slice 6 Completed (Web Dashboard Workspace) -> Moving to Deployment & Launch
 
 ---
 
@@ -29,12 +29,12 @@
 - [x] **Slice 4:** 4-layer context memory assembly pipeline & pgvector cosine similarity recall implemented ([`contextService.ts`](../apps/api/src/services/contextService.ts)).
 - [x] **Slice 4:** Telegram text message listener wired to Gemini responses & background memory extractions ([`bot.ts`](../apps/api/src/bot.ts)).
 - [x] **Slice 5:** Cron automations implemented ([`cronService.ts`](../apps/api/src/services/cronService.ts), [`index.ts`](../apps/api/src/index.ts)): hourly runner evaluating localized timezones (`date-fns-tz`) for `daily_morning` actions and Sunday `weekly_planner` summaries, at-most-once locking via `job_runs`, nightly `memory_summarize`, and `embedding_backfill`.
+- [x] **Slice 6:** Web Dashboard Workspace implemented ([`apps/web`](../apps/web)): full responsive SPA with Tailwind CSS v4, TanStack Query server state hydration, Supabase Realtime synchronization, 6 complete view pages (`/`, `/onboarding`, `/dashboard`, `/conversations`, `/insights`, `/settings`), Recharts analytics, and supporting API endpoints in Express ([`profile.ts`](../apps/api/src/routes/profile.ts), [`actions.ts`](../apps/api/src/routes/actions.ts), [`conversations.ts`](../apps/api/src/routes/conversations.ts), [`summaries.ts`](../apps/api/src/routes/summaries.ts), [`memories.ts`](../apps/api/src/routes/memories.ts)).
 
 ### In Progress ➜
-- [ ] **Slice 6:** Web Dashboard Workspace (User registration/login auth flow UI, dashboard views, action cards, and realtime updates).
+- [ ] Milestone 6: Deployment & Launch (Vercel & Render).
 
 ### Not Started 🗙
-- React frontend dashboard UI.
 - Production deployment setup (Vercel & Render).
 
 ---
