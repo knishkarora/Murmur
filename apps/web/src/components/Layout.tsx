@@ -191,6 +191,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </header>
 
+        {isDemo && (
+          <div className="bg-indigo-950/70 border-b border-indigo-800/50 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-indigo-200">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+              <span>Local Demo Mode is active. To connect your real Telegram bot, create a free live account.</span>
+            </div>
+            <button
+              onClick={handleSignOut}
+              className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition shrink-0 shadow-sm"
+            >
+              Sign Out & Go to Login
+            </button>
+          </div>
+        )}
+
         {/* View Content */}
         <div className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto">{children}</div>
       </main>
