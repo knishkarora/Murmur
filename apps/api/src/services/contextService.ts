@@ -50,19 +50,21 @@ export async function assembleUserContext(
   let semanticRecalls: string[] = [];
   try {
     const messageVector = await embedText(userMessage);
-    const vectorStr = `[${messageVector.join(",")}]`;
+    if (messageVector.length > 0) {
+      const vectorStr = `[${messageVector.join(",")}]`;
 
-    const recallRows = await db
-      .select({
-        content: messages.content,
-      })
-      .from(messageEmbeddings)
-      .innerJoin(messages, eq(messageEmbeddings.messageId, messages.id))
-      .where(eq(messageEmbeddings.userId, userId))
-      .orderBy(sql`${messageEmbeddings.embedding} <=> ${vectorStr}::vector`)
-      .limit(5);
+      const recallRows = await db
+        .select({
+          content: messages.content,
+        })
+        .from(messageEmbeddings)
+        .innerJoin(messages, eq(messageEmbeddings.messageId, messages.id))
+        .where(eq(messageEmbeddings.userId, userId))
+        .orderBy(sql`${messageEmbeddings.embedding} <=> ${vectorStr}::vector`)
+        .limit(5);
 
-    semanticRecalls = recallRows.map((r) => r.content);
+      semanticRecalls = recallRows.map((r) => r.content);
+    }
   } catch (err) {
     logger.error({ err }, "Failed to query semantic vector recall");
   }
@@ -82,11 +84,13 @@ export async function storeMessageEmbedding(
 ): Promise<void> {
   try {
     const vectorValues = await embedText(content);
-    await db.insert(messageEmbeddings).values({
-      messageId,
-      userId,
-      embedding: vectorValues,
-    });
+    if (vectorValues.length > 0) {
+      await db.insert(messageEmbeddings).values({
+        messageId,
+        userId,
+        embedding: vectorValues,
+      });
+    }
   } catch (err) {
     logger.error({ err, messageId, userId }, "Failed to generate and store message embedding");
   }

@@ -11,18 +11,21 @@ import { logger } from "../config.js";
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
-// Priority Waterfall:
-// 1. Top Priority: gemini-1.5-flash-8b (Fastest, 50% cheaper, lowest latency, minimal token consumption)
-// 2. Universal Fallback: gemini-1.5-flash (Universally active across all Google AI Studio tiers)
-// 3. Extended Fallback: gemini-2.0-flash
+// Active model candidates per Google Generative Language API
 const CANDIDATE_MODELS = [
   process.env.GEMINI_MODEL,
-  "gemini-1.5-flash-8b",
+  "gemini-3.8-flash", // Recommended directly by Google API error response
+  "gemini-2.5-flash",
+  "gemini-3.5-flash",
   "gemini-1.5-flash",
-  "gemini-2.0-flash",
 ].filter(Boolean) as string[];
 
-const EMBEDDING_MODEL = "text-embedding-004";
+const EMBEDDING_MODELS = [
+  "gemini-embedding-001",
+  "text-embedding-005",
+  "embedding-001",
+  "text-embedding-004",
+];
 
 export interface AiContext {
   recentMessages: { role: string; content: string }[];
@@ -85,7 +88,7 @@ async function callGemini(prompt: string): Promise<string> {
       const msg = err?.message || "";
       logger.warn(
         { model: modelName, status, error: msg },
-        "Gemini candidate attempt failed, falling back to next candidate model"
+        "Gemini candidate model attempt failed, falling back to next model"
       );
       continue;
     }
@@ -143,9 +146,21 @@ export async function extractMemories(recentText: string): Promise<{ key: string
 }
 
 export async function embedText(text: string): Promise<number[]> {
-  const model = genAI.getGenerativeModel({ model: EMBEDDING_MODEL });
-  const result = await model.embedContent(text);
-  return result.embedding.values;
+  for (const embModel of EMBEDDING_MODELS) {
+    try {
+      const model = genAI.getGenerativeModel({ model: embModel });
+      const result = await model.embedContent(text);
+      let values = result.embedding.values;
+      // Slice or pad to 768 dimensions for pgvector(768)
+      if (values.length > 768) {
+        values = values.slice(0, 768);
+      }
+      return values;
+    } catch {
+      continue;
+    }
+  }
+  return [];
 }
 
 export async function summarizeConversation(recentText: string, existingSummary: string | null): Promise<string> {
