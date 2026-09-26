@@ -11,7 +11,17 @@ import { logger } from "../config.js";
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
-const FLASH_MODEL = "gemini-2.0-flash";
+// Priority Waterfall:
+// 1. Top Priority: gemini-1.5-flash-8b (Fastest, 50% cheaper, lowest latency, minimal token consumption)
+// 2. Universal Fallback: gemini-1.5-flash (Universally active across all Google AI Studio tiers)
+// 3. Extended Fallback: gemini-2.0-flash
+const CANDIDATE_MODELS = [
+  process.env.GEMINI_MODEL,
+  "gemini-1.5-flash-8b",
+  "gemini-1.5-flash",
+  "gemini-2.0-flash",
+].filter(Boolean) as string[];
+
 const EMBEDDING_MODEL = "text-embedding-004";
 
 export interface AiContext {
@@ -56,16 +66,32 @@ function buildPrompt(context: AiContext, userMessage: string): string {
   return parts.join("\n");
 }
 
-async function callGemini(prompt: string, timeoutMs = 15000): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: FLASH_MODEL });
-  const result = await model.generateContent({
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: { maxOutputTokens: 1024 },
-  });
+async function callGemini(prompt: string): Promise<string> {
+  let lastError: any = null;
 
-  void timeoutMs; // AbortSignal support varies by SDK version; prompt length is primary guard
-  const text = result.response.text();
-  return text.slice(0, 4096);
+  for (const modelName of CANDIDATE_MODELS) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 1024 },
+      });
+
+      const text = result.response.text();
+      return text.slice(0, 4096);
+    } catch (err: any) {
+      lastError = err;
+      const status = err?.status || err?.statusCode;
+      const msg = err?.message || "";
+      logger.warn(
+        { model: modelName, status, error: msg },
+        "Gemini candidate attempt failed, falling back to next candidate model"
+      );
+      continue;
+    }
+  }
+
+  throw lastError || new Error("All Gemini candidate models failed");
 }
 
 export async function generateReply(context: AiContext, userMessage: string): Promise<string> {
@@ -73,7 +99,7 @@ export async function generateReply(context: AiContext, userMessage: string): Pr
   try {
     return await callGemini(prompt);
   } catch (err) {
-    logger.error({ err }, "Gemini reply failed");
+    logger.error({ err }, "All Gemini reply models failed");
     return "I'm having a brief moment — please try again in a minute. Your progress still counts.";
   }
 }
@@ -85,7 +111,7 @@ export async function generateDailyAction(context: AiContext): Promise<string> {
   try {
     return await callGemini(prompt);
   } catch (err) {
-    logger.error({ err }, "Gemini daily action generation failed");
+    logger.error({ err }, "All Gemini daily action models failed");
     return "Spend 15 minutes today reviewing your primary resume project or practicing one core technical concept.";
   }
 }
@@ -98,7 +124,7 @@ export async function generateWeeklySummary(context: AiContext, summaryStats?: s
   try {
     return await callGemini(prompt);
   } catch (err) {
-    logger.error({ err }, "Gemini weekly summary generation failed");
+    logger.error({ err }, "All Gemini weekly summary models failed");
     return "Great effort this past week. Every consistent step, no matter how small, compounds toward your placement goals.";
   }
 }
