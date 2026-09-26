@@ -59,8 +59,13 @@ export const SettingsPage: React.FC = () => {
   const handleGenerateTelegram = async () => {
     try {
       const res = await generateLink.mutateAsync();
-      setTelegramUrl(res.url);
-      toast.success("New Telegram link generated!");
+      if (res?.url) {
+        setTelegramUrl(res.url);
+        toast.success("New Telegram link generated! Opening bot...");
+        window.open(res.url, "_blank");
+      } else {
+        toast.error("No Telegram URL returned by the server.");
+      }
     } catch (err: any) {
       toast.error(err.message || "Failed to generate link");
     }

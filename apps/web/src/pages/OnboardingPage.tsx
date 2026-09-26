@@ -40,8 +40,13 @@ export const OnboardingPage: React.FC = () => {
     setIsGeneratingLink(true);
     try {
       const res = await generateLink.mutateAsync();
-      setTelegramUrl(res.url);
-      toast.success("Telegram link generated! Click to open the bot.");
+      if (res?.url) {
+        setTelegramUrl(res.url);
+        toast.success("Telegram link generated! Opening bot in new tab...");
+        window.open(res.url, "_blank");
+      } else {
+        toast.error("No Telegram URL returned by the server.");
+      }
     } catch (err: any) {
       toast.error(err.message || "Failed to generate Telegram deep link");
     } finally {

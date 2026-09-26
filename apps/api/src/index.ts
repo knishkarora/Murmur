@@ -18,20 +18,37 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: env.WEB_URL,
+    origin: (origin, callback) => {
+      // Allow mobile apps, curl, server-to-server, or same-origin
+      if (!origin) return callback(null, true);
+      // Allow configured WEB_URL, any Render domain, Vercel domain, or localhost
+      if (
+        origin === env.WEB_URL ||
+        origin.endsWith(".onrender.com") ||
+        origin.endsWith(".vercel.app") ||
+        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
   }),
 );
 app.use(express.json());
 
-// API routes
-app.use(telegramRouter);
-app.use(preferencesRouter);
-app.use(profileRouter);
-app.use(actionsRouter);
-app.use(conversationsRouter);
-app.use(summariesRouter);
-app.use(memoriesRouter);
+// API routes - support both direct (/me/...) and prefixed (/api/me/...)
+const apiRouter = express.Router();
+apiRouter.use(telegramRouter);
+apiRouter.use(preferencesRouter);
+apiRouter.use(profileRouter);
+apiRouter.use(actionsRouter);
+apiRouter.use(conversationsRouter);
+apiRouter.use(summariesRouter);
+apiRouter.use(memoriesRouter);
+
+app.use(apiRouter);
+app.use("/api", apiRouter);
 
 // Public health check route
 app.get("/health", (_req, res) => {

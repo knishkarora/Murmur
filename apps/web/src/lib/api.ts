@@ -1,5 +1,8 @@
 import { supabase } from "./supabase.js";
 
+const RAW_API_URL = import.meta.env.VITE_API_URL as string | undefined;
+const API_BASE = RAW_API_URL ? RAW_API_URL.replace(/\/+$/, "") : "";
+
 export async function getAuthToken(): Promise<string | null> {
   // Check for local demo token first
   const demoToken = localStorage.getItem("murmur_demo_token");
@@ -30,15 +33,25 @@ export async function apiRequest<T = any>(
     headers.set("Content-Type", "application/json");
   }
 
-  // Ensure prefix with /api
-  const url = endpoint.startsWith("/api") ? endpoint : `/api${endpoint}`;
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  // If API_BASE is configured (e.g. https://murmur-86lm.onrender.com), target it directly
+  const url = API_BASE ? `${API_BASE}${cleanEndpoint}` : `/api${cleanEndpoint}`;
 
   const response = await fetch(url, {
     ...options,
     headers,
   });
 
-  const data = await response.json().catch(() => ({}));
+  const contentType = response.headers.get("content-type") || "";
+  let data: any;
+
+  if (contentType.includes("application/json")) {
+    data = await response.json();
+  } else {
+    throw new Error(
+      `Received non-JSON response from ${url} (status ${response.status}). Ensure backend is reachable.`
+    );
+  }
 
   if (!response.ok) {
     const message = data.error || data.message || `Request failed with status ${response.status}`;
