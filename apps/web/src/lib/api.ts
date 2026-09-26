@@ -1,6 +1,10 @@
 import { supabase } from "./supabase.js";
 
-const RAW_API_URL = import.meta.env.VITE_API_URL as string | undefined;
+const DEFAULT_API_URL = "https://murmur-86lm.onrender.com";
+const RAW_API_URL =
+  (import.meta.env.VITE_API_URL as string | undefined) ||
+  (import.meta.env.PROD ? DEFAULT_API_URL : "");
+
 const API_BASE = RAW_API_URL ? RAW_API_URL.replace(/\/+$/, "") : "";
 
 export async function getAuthToken(): Promise<string | null> {
