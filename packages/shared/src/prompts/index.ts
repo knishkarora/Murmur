@@ -31,3 +31,9 @@ export const MEMORY_EXTRACT_PROMPT = `Extract durable facts about this user from
 
 Only extract facts that would help future conversations. Keys: goal, focus, challenge, preference, completed, skill, timeline.
 Skip temporary moods. Max 5 facts.`;
+
+export const EVENING_REFLECTION_PROMPT = `Generate a gentle, supportive evening check-in for the user. It must:
+- Ask warmly how their day or micro-action went, or offer a stress-free moment to unwind
+- Emphasize that rest and showing up count equally
+- Keep it under 80 words, no guilt, no pressure`;
+

@@ -16,7 +16,8 @@ import { logger } from "../config.js";
 
 export async function assembleUserContext(
   userId: string,
-  userMessage: string
+  userMessage: string,
+  includeSemanticRecall: boolean = false
 ): Promise<AiContext> {
   // Layer 1: Short-term Buffer (Last 20 messages)
   const recentMsgRows = await db
@@ -31,48 +32,65 @@ export async function assembleUserContext(
 
   const recentMessages = recentMsgRows.reverse();
 
-  // Layer 2: Rolling Summary (profiles.conversationSummary)
+  // Layer 2: Rolling Summary & Placement Attributes (profiles)
   const profileRows = await db
-    .select({ conversationSummary: profiles.conversationSummary })
+    .select({
+      conversationSummary: profiles.conversationSummary,
+      branch: profiles.branch,
+      targetRole: profiles.targetRole,
+      focusArea: profiles.focusArea,
+      timeline: profiles.timeline,
+      primaryGoal: profiles.primaryGoal,
+    })
     .from(profiles)
     .where(eq(profiles.userId, userId))
     .limit(1);
 
-  const conversationSummary = profileRows[0]?.conversationSummary ?? null;
+  const userProfile = profileRows[0];
+  const conversationSummary = userProfile?.conversationSummary ?? null;
 
-  // Layer 3: Structured Memories (user_memories KV facts)
+  // Layer 3: Structured Memories (user_memories KV facts + profile placement facts)
   const memoryRows = await db
     .select({ key: userMemories.key, value: userMemories.value })
     .from(userMemories)
     .where(eq(userMemories.userId, userId));
 
-  // Layer 4: Semantic Recall (Top 5 similar historical messages via pgvector)
+  const allMemories: { key: string; value: string }[] = [...memoryRows];
+  if (userProfile?.branch) allMemories.push({ key: "Branch / Degree", value: userProfile.branch });
+  if (userProfile?.targetRole) allMemories.push({ key: "Target Role", value: userProfile.targetRole });
+  if (userProfile?.focusArea) allMemories.push({ key: "Current Focus", value: userProfile.focusArea });
+  if (userProfile?.timeline) allMemories.push({ key: "Placement Timeline", value: userProfile.timeline });
+  if (userProfile?.primaryGoal) allMemories.push({ key: "Primary Goal / Expectation", value: userProfile.primaryGoal });
+
+  // Layer 4: Semantic Recall (optional, bypassed on fast interactive chat to preserve Gemini RPM/RPD)
   let semanticRecalls: string[] = [];
-  try {
-    const messageVector = await embedText(userMessage);
-    if (messageVector.length > 0) {
-      const vectorStr = `[${messageVector.join(",")}]`;
+  if (includeSemanticRecall) {
+    try {
+      const messageVector = await embedText(userMessage);
+      if (messageVector.length > 0) {
+        const vectorStr = `[${messageVector.join(",")}]`;
 
-      const recallRows = await db
-        .select({
-          content: messages.content,
-        })
-        .from(messageEmbeddings)
-        .innerJoin(messages, eq(messageEmbeddings.messageId, messages.id))
-        .where(eq(messageEmbeddings.userId, userId))
-        .orderBy(sql`${messageEmbeddings.embedding} <=> ${vectorStr}::vector`)
-        .limit(5);
+        const recallRows = await db
+          .select({
+            content: messages.content,
+          })
+          .from(messageEmbeddings)
+          .innerJoin(messages, eq(messageEmbeddings.messageId, messages.id))
+          .where(eq(messageEmbeddings.userId, userId))
+          .orderBy(sql`${messageEmbeddings.embedding} <=> ${vectorStr}::vector`)
+          .limit(5);
 
-      semanticRecalls = recallRows.map((r) => r.content);
+        semanticRecalls = recallRows.map((r) => r.content);
+      }
+    } catch (err) {
+      logger.error({ err }, "Failed to query semantic vector recall");
     }
-  } catch (err) {
-    logger.error({ err }, "Failed to query semantic vector recall");
   }
 
   return {
     recentMessages,
     conversationSummary,
-    memories: memoryRows,
+    memories: allMemories,
     semanticRecalls,
   };
 }

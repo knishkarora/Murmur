@@ -41,6 +41,11 @@ class DevMockStore {
     timezone: "Asia/Kolkata",
     onboardingDone: true,
     conversationSummary: "Targeting SDE placements with React, TypeScript, and distributed systems focus.",
+    branch: "Computer Science & Engineering",
+    targetRole: "Software Development Engineer",
+    focusArea: "DSA & System Design",
+    timeline: "2026 Batch",
+    primaryGoal: "Build daily consistency and crack product placement",
     createdAt: new Date(Date.now() - 14 * 86400000).toISOString(),
   };
 
@@ -48,6 +53,7 @@ class DevMockStore {
     userId: "00000000-0000-0000-0000-000000000001",
     morningHour: 8,
     eveningHour: 20,
+    eveningNotificationEnabled: false,
     weeklyDay: 0,
     tone: "friendly" as "friendly" | "direct" | "encouraging",
   };

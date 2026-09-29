@@ -4,6 +4,7 @@ import {
   DAILY_ACTION_PROMPT,
   WEEKLY_SUMMARY_PROMPT,
   MEMORY_EXTRACT_PROMPT,
+  EVENING_REFLECTION_PROMPT,
 } from "@companion/shared/prompts";
 import { memoryExtractSchema } from "@companion/shared/schemas";
 import { env } from "../config.js";
@@ -77,8 +78,16 @@ async function callGemini(prompt: string): Promise<string> {
       const model = genAI.getGenerativeModel({ model: modelName });
       const result = await model.generateContent({
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 1024 },
+        generationConfig: { maxOutputTokens: 2048 },
       });
+
+      const candidate = result.response.candidates?.[0];
+      if (candidate?.finishReason && candidate.finishReason !== "STOP") {
+        logger.warn(
+          { model: modelName, finishReason: candidate.finishReason },
+          "Gemini candidate finished with non-STOP status"
+        );
+      }
 
       const text = result.response.text();
       return text.slice(0, 4096);
@@ -116,6 +125,22 @@ export async function generateDailyAction(context: AiContext): Promise<string> {
   } catch (err) {
     logger.error({ err }, "All Gemini daily action models failed");
     return "Spend 15 minutes today reviewing your primary resume project or practicing one core technical concept.";
+  }
+}
+
+export async function generateEveningReflection(context: AiContext): Promise<string> {
+  const prompt = [
+    SYSTEM_PROMPT,
+    "",
+    EVENING_REFLECTION_PROMPT,
+    "",
+    buildPrompt(context, "How did your day go? Take a moment to reflect or rest."),
+  ].join("\n");
+  try {
+    return await callGemini(prompt);
+  } catch (err) {
+    logger.error({ err }, "All Gemini evening reflection models failed");
+    return "Hope your day went well. Remember, resting and taking things one day at a time is just as important as the hustle.";
   }
 }
 

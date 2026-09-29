@@ -95,7 +95,21 @@
   * Prevents frontend development and verification from blocking when local environment variables are placeholders.
   * Allows end-to-end evaluation of the entire dashboard, onboarding, chat, insights, and settings flows without cloud dependencies.
 * **Tradeoffs Accepted:** Mock user ID in dev mode; strictly disabled in production.
+* **Immutability Status:** Settled & Immutable.---
+
+## [2026-09-29] Decision: Single-Call Chat Pipeline, Telegram Debounce Buffer, Token Headroom & Placement Profile Pre-seeding
+
+* **Context & Scope:** Addressing mid-message truncation (`3. **`), Gemini Free Tier rate-limit exhaustion (RPM/RPD), Render free tier sleep behavior, and conversational onboarding overhead.
+* **Choice Made:**
+  1. Increase Gemini `maxOutputTokens` from 1,024 to 2,048 to prevent reasoning/thinking token starvation.
+  2. Implement an in-memory 2.5-second debounce buffer in the Telegram listener with immediate typing feedback (`sendChatAction("typing")`) to batch rapid user messages into a single prompt.
+  3. Streamline chat processing to 1 single Gemini call (`generateReply`), relying on Postgres recent message history for context, while deferring vector embeddings and rolling summaries to scheduled nightly background jobs (`embedding_backfill`, `memory_summarize`).
+  4. Expand `profiles` and `user_preferences` schemas to capture 5 core placement attributes (Branch, Target Role, Focus Area, Timeline, Primary Goal) directly during Web Onboarding & Settings, and add an opt-in toggle for twice-a-day notifications (`eveningNotificationEnabled`).
+* **Rationale (Why over What):**
+  * Calling Gemini 6 times per chat message burned free tier quota (15 RPM / 1,500 RPD) in 2-3 quick messages. A single call preserves 83% of quota while losing zero recent context.
+  * Rapid user typing in Telegram creates fragmented micro-messages; a 2.5s debounce batches them cleanly without introducing unnatural delays.
+  * Structured form collection during onboarding avoids wasting conversational LLM turns extracting fundamental student background data.
+* **Tradeoffs Accepted:**
+  * Embeddings are not immediately searchable via pgvector until the nightly backfill runs; completely acceptable because the last 20 messages are already passed directly in plain text.
 * **Immutability Status:** Settled & Immutable.
-
-
 

@@ -134,8 +134,32 @@ Murmur is no longer a purely reactive chatbot; it now actively reaches out to us
 ### Why this mattered
 Murmur now provides a complete, modern visual workspace alongside its Telegram interface. Users can inspect their entire conversational memory, track their daily progress, analyze weekly momentum, and adjust assistant behavior seamlessly in real time.
 
+---
 
+## Entry 8 — Chat Pipeline Optimization, Debounce Buffer & Placement Onboarding (2026-09-29)
 
+### What was accomplished
+- **Gemini Free Tier API Optimization:**
+  - Reduced API load per chat turn from 6 Gemini calls down to **1 single call** (`generateReply`).
+  - Preserved complete conversational context by pulling recent dialogue directly from PostgreSQL with 0 API calls.
+  - Offloaded vector embeddings and rolling summaries to scheduled nightly cron jobs (`embedding_backfill`, `memory_summarize`).
+- **Telegram Debounce Queue & Realtime Typing Action:**
+  - Implemented an in-memory 2.5-second debounce buffer in `bot.ts` that batches rapid subsequent messages into a single prompt.
+  - Added immediate Telegram typing feedback (`sendChatAction("typing")`) so users see real-time responsiveness without wasting API calls.
+- **Token Headroom & Truncation Fix:**
+  - Increased Gemini `maxOutputTokens` from 1,024 to 2,048, eliminating output truncation mid-bullet caused by reasoning token consumption.
+  - Added safety inspection of `finishReason` on generation results.
+- **Twice-a-Day Notification Schedule:**
+  - Added `eveningNotificationEnabled` toggle and `eveningHour` preference to schema, routes, and `SettingsPage.tsx`.
+  - Implemented `runDailyEveningJob` in `cronService.ts` for users opting into evening reflections.
+  - Documented Render 15-minute free tier sleep behavior and external pre-warming pattern (pinging `/health` at 7:50 AM).
+- **Placement Profile Pre-Seeding:**
+  - Expanded `profiles` schema with 5 key placement attributes: `branch`, `targetRole`, `focusArea`, `timeline`, and `primaryGoal`.
+  - Enriched Web Onboarding (`OnboardingPage.tsx`) and Settings (`SettingsPage.tsx`) with structured forms for these attributes.
+  - Wired `assembleUserContext` in `contextService.ts` to automatically inject these attributes into AI context, eliminating the need for exploratory questioning turns.
+- Verified monorepo with 0 typecheck errors (`pnpm typecheck`) and full production build.
 
+### Why this mattered
+Murmur now runs reliably within the constraints of free-tier infrastructure. The bot responds without mid-message cutoffs, rapid user typing is smoothly consolidated without burning API quotas, and the AI knows the student's career background immediately on day one without asking repetitive setup questions.
 
 

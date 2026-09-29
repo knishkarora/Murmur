@@ -13,13 +13,18 @@ PostgreSQL database hosted on **Supabase** using **Drizzle ORM** for schema decl
 All schemas are defined in [`schema.ts`](../apps/api/src/db/schema.ts).
 
 ### 1. `profiles`
-Extends user authentication profile with basic metadata and conversation contexts.
+Extends user authentication profile with basic metadata, placement background, and conversation contexts.
 - `id`: `uuid` (Primary Key, default: random)
 - `userId`: `uuid` (Unique, foreign key to auth.users)
 - `name`: `text` (Nullable)
 - `timezone`: `text` (Default: `'Asia/Kolkata'`)
 - `onboardingDone`: `boolean` (Default: `false`)
 - `conversationSummary`: `text` (Nullable, rolling LLM-generated summary)
+- `branch`: `text` (Nullable, student engineering branch/stream e.g. `'4th Year ECE'`)
+- `targetRole`: `text` (Nullable, desired domain/job e.g. `'Embedded Systems'`)
+- `focusArea`: `text` (Nullable, current prep priority e.g. `'Resume & Projects'`)
+- `timeline`: `text` (Nullable, target placement timeline e.g. `'2026 Batch'`)
+- `primaryGoal`: `text` (Nullable, student expectation e.g. `'Build daily consistency'`)
 - `createdAt`: `timestamp with timezone` (Default: `now()`)
 
 ### 2. `telegram_accounts`
@@ -36,6 +41,7 @@ Daily notification windows and tone presets.
 - `userId`: `uuid` (Unique, links to user profiles)
 - `morningHour`: `integer` (Default: `8`, morning notification hour)
 - `eveningHour`: `integer` (Default: `20`, evening reflection hour)
+- `eveningNotificationEnabled`: `boolean` (Default: `false`, toggle for twice-a-day notifications)
 - `weeklyDay`: `integer` (Default: `0` (Sunday), weekly summarization trigger day)
 - `tone`: `enum` (`'friendly'`, `'direct'`, `'encouraging'`, Default: `'friendly'`)
 

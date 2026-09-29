@@ -15,6 +15,11 @@ const updateProfileSchema = z.object({
   name: z.string().nullable().optional(),
   timezone: z.string().optional(),
   onboardingDone: z.boolean().optional(),
+  branch: z.string().nullable().optional(),
+  targetRole: z.string().nullable().optional(),
+  focusArea: z.string().nullable().optional(),
+  timeline: z.string().nullable().optional(),
+  primaryGoal: z.string().nullable().optional(),
 });
 
 // GET /me/profile - Fetch combined user profile, preferences, and Telegram link status
@@ -66,6 +71,7 @@ router.get("/me/profile", requireAuth, async (req: AuthedRequest, res, next) => 
       preferences: prefs || {
         morningHour: 8,
         eveningHour: 20,
+        eveningNotificationEnabled: false,
         weeklyDay: 0,
         tone: "friendly",
       },
@@ -93,9 +99,8 @@ router.patch("/me/profile", requireAuth, async (req: AuthedRequest, res, next) =
   }
 
   if (userId === "00000000-0000-0000-0000-000000000001") {
+    Object.assign(devMockStore.profile, parsed.data);
     if (parsed.data.name !== undefined) devMockStore.profile.name = parsed.data.name || "Mio";
-    if (parsed.data.timezone !== undefined) devMockStore.profile.timezone = parsed.data.timezone;
-    if (parsed.data.onboardingDone !== undefined) devMockStore.profile.onboardingDone = parsed.data.onboardingDone;
     res.json({
       status: "ok",
       profile: devMockStore.profile,

@@ -44,32 +44,38 @@ This document tracks execution flows across application boundaries in Murmur.
 
 ---
 
-## 2. Telegram Message Ingestion & 4-Layer Context Assembly Flow
+## 2. Telegram Message Ingestion & Debounced 1-Call Chat Pipeline
 
 ### Entry Point
 - Telegram user sends text message to Telegram Bot -> Delivered via `POST /webhooks/telegram` to `bot.on("message:text")` ([`bot.ts`](apps/api/src/bot.ts)).
 
 ### Execution Sequence
-1. **[api] User Lookup:** `bot.on("message:text")` queries `telegram_accounts` to map `ctx.from.id` to `userId`.
-2. **[api] Message Persistence:** Inserts message into `messages` table (`role: 'user'`).
-3. **[api] Async Vector Embedding:** `storeMessageEmbedding` generates a 768-dim vector via Gemini `text-embedding-004` and inserts into `message_embeddings`.
-4. **[api] 4-Layer Context Assembly ([`contextService.ts`](apps/api/src/services/contextService.ts)):**
-   - **Layer 1:** Fetches last 20 messages from `messages` table.
+1. **[api] User Lookup & Immediate Feedback:** `bot.on("message:text")` queries `telegram_accounts` to map `ctx.from.id` to `userId`. Immediately emits Telegram chat action (`sendChatAction("typing")`) so the user sees real-time typing state.
+2. **[api] 2.5-Second Debounce Buffer:**
+   - Appends incoming text to an in-memory pending queue for the user.
+   - Clears existing timeout and starts a 2500ms debounce timer.
+   - If the user sends follow-up thoughts in rapid succession (e.g., 2-3 quick messages), they are merged into a single multi-line prompt (`texts.join("\n")`).
+3. **[api] Message Persistence:** Upon timer expiration, inserts the combined user prompt into `messages` table (`role: 'user'`).
+4. **[api] Context Assembly ([`contextService.ts`](apps/api/src/services/contextService.ts)):**
+   - **Layer 1:** Fetches last 20 messages from `messages` table (pure DB query, 0 API calls).
    - **Layer 2:** Fetches `profiles.conversationSummary`.
-   - **Layer 3:** Fetches `user_memories` KV fact rows.
-   - **Layer 4:** Generates query vector for user prompt and performs `pgvector` HNSW cosine distance search (`<=>`) over `message_embeddings` for top 5 closest past messages.
-5. **[api] Gemini Generation ([`aiService.ts`](apps/api/src/services/aiService.ts)):**
-   - Passes assembled prompt context to Gemini `gemini-2.0-flash`.
-   - Post-slices response text to <= 4096 chars (Telegram max length).
+   - **Layer 3:** Injects pre-seeded profile placement facts (Branch, Target Role, Focus Area, Timeline, Primary Goal) alongside `user_memories` KV rows.
+   - *Note:* Real-time vector search and on-the-fly embeddings are bypassed during interactive chat to conserve API quota.
+5. **[api] Single Gemini Generation ([`aiService.ts`](apps/api/src/services/aiService.ts)):**
+   - Passes assembled prompt context to Gemini (`maxOutputTokens: 2048`).
+   - Slices response text to <= 4096 chars (Telegram max length).
 6. **[api] Assistant Message Persistence & Delivery:**
    - Saves assistant reply to `messages` table (`role: 'assistant'`).
    - Delivers reply to Telegram user via `ctx.reply()`.
-7. **[api] Background Memory Extraction:**
-   - Asynchronously runs `triggerMemoryExtractionAndSummary`: parses facts into `user_memories` and updates `profiles.conversationSummary`.
+7. **[api] Nightly Deferred Processing:**
+   - Fact extraction and rolling summarization run in the nightly `memory_summarize` cron (`0 2 * * *`).
+   - Vector embeddings are backfilled by `embedding_backfill` (`0 3 * * *`).
 
-### Modified Scope (Slice 4)
-- `[NEW]` [`apps/api/src/services/contextService.ts`](apps/api/src/services/contextService.ts): 4-layer context memory assembly, pgvector cosine queries, and background memory extract trigger.
-- `[MODIFY]` [`apps/api/src/bot.ts`](apps/api/src/bot.ts): Added `bot.on("message:text")` listener wiring memory assembly and AI generation to Telegram replies.
+### Modified Scope (Optimization Phase)
+- `[MODIFY]` [`apps/api/src/bot.ts`](apps/api/src/bot.ts): 2.5-second debounce buffer, typing chat action, single Gemini generation call.
+- `[MODIFY]` [`apps/api/src/services/aiService.ts`](apps/api/src/services/aiService.ts): Increased `maxOutputTokens` to 2048, safety finishReason inspection, evening reflection prompt.
+- `[MODIFY]` [`apps/api/src/services/contextService.ts`](apps/api/src/services/contextService.ts): Direct injection of profile placement fields into AI context.
+- `[MODIFY]` [`apps/api/src/services/cronService.ts`](apps/api/src/services/cronService.ts): Added `runDailyEveningJob` for users with `eveningNotificationEnabled`.
 
 ---
 

@@ -20,7 +20,11 @@ import {
   storeMessageEmbedding,
   triggerMemoryExtractionAndSummary,
 } from "./contextService.js";
-import { generateDailyAction, generateWeeklySummary } from "./aiService.js";
+import {
+  generateDailyAction,
+  generateWeeklySummary,
+  generateEveningReflection,
+} from "./aiService.js";
 
 export const INDIA_TIMEZONE = "Asia/Kolkata";
 
@@ -130,6 +134,111 @@ export async function runDailyMorningJob(referenceDate: Date = new Date()): Prom
   logger.info(
     { processed, skipped, errors, totalMatched: matchingUsers.length },
     "Finished daily_morning cron job runner"
+  );
+  return { processed, skipped, errors };
+}
+
+/**
+ * Runs the daily evening reflection check-in job for users with eveningNotificationEnabled = true whose eveningHour matches now.
+ */
+export async function runDailyEveningJob(referenceDate: Date = new Date()): Promise<{
+  processed: number;
+  skipped: number;
+  errors: number;
+}> {
+  const zoned = toZonedTime(referenceDate, INDIA_TIMEZONE);
+  const currentIstHour = zoned.getHours();
+  const localDateStr = formatInTimeZone(referenceDate, INDIA_TIMEZONE, "yyyy-MM-dd");
+
+  logger.info(
+    { currentIstHour, localDateStr },
+    "Starting daily_evening cron job runner for India (IST)"
+  );
+
+  // Directly query users who opted into evening check-ins and whose eveningHour matches current IST hour
+  const matchingUsers = await db
+    .select({
+      userId: profiles.userId,
+      name: profiles.name,
+      eveningHour: userPreferences.eveningHour,
+      chatId: telegramAccounts.chatId,
+    })
+    .from(profiles)
+    .innerJoin(
+      userPreferences,
+      and(
+        eq(profiles.userId, userPreferences.userId),
+        eq(userPreferences.eveningNotificationEnabled, true)
+      )
+    )
+    .leftJoin(telegramAccounts, eq(profiles.userId, telegramAccounts.userId))
+    .where(sql`COALESCE(${userPreferences.eveningHour}, 20) = ${currentIstHour}`);
+
+  let processed = 0;
+  let skipped = 0;
+  let errors = 0;
+
+  for (const user of matchingUsers) {
+    try {
+      const insertedLock = await db
+        .insert(jobRuns)
+        .values({
+          jobType: "daily_evening",
+          userId: user.userId,
+          runDate: localDateStr,
+        })
+        .onConflictDoNothing()
+        .returning({ id: jobRuns.id });
+
+      if (insertedLock.length === 0) {
+        logger.debug(
+          { userId: user.userId, date: localDateStr },
+          "daily_evening job already ran today for user; skipping"
+        );
+        skipped++;
+        continue;
+      }
+
+      const context = await assembleUserContext(user.userId, "How did your day go? Take a moment to reflect or rest.");
+      const reflectionText = await generateEveningReflection(context);
+
+      if (user.chatId) {
+        try {
+          await bot.api.sendMessage(
+            user.chatId,
+            `🌙 **Good evening!**\n\n${reflectionText}`,
+            { parse_mode: "Markdown" }
+          );
+        } catch (tgErr) {
+          logger.warn(
+            { err: tgErr, userId: user.userId, chatId: user.chatId },
+            "Markdown send failed for evening reflection, falling back to plain text"
+          );
+          try {
+            await bot.api.sendMessage(
+              user.chatId,
+              `🌙 Good evening!\n\n${reflectionText}`
+            );
+          } catch (fallbackErr) {
+            logger.error(
+              { err: fallbackErr, userId: user.userId },
+              "Failed to dispatch daily evening reflection via Telegram"
+            );
+          }
+        }
+      }
+
+      processed++;
+      logger.info({ userId: user.userId }, "Successfully generated and delivered daily evening reflection");
+    } catch (err) {
+      errors++;
+      logger.error({ err, userId: user.userId }, "Error processing daily_evening job for user");
+    }
+  }
+
+  logger.info(
+    { processed, skipped, errors, totalMatched: matchingUsers.length },
+    "Finished daily_evening cron job runner"
   );
   return { processed, skipped, errors };
 }
@@ -356,6 +465,7 @@ export function initScheduler(): {
       logger.info("Hourly IST cron tick fired");
       try {
         await runDailyMorningJob();
+        await runDailyEveningJob();
         await runWeeklyPlannerJob();
       } catch (err) {
         logger.error({ err }, "Error in hourly cron task");

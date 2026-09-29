@@ -10,6 +10,12 @@ import {
   ExternalLink,
   Shield,
   Loader2,
+  GraduationCap,
+  Briefcase,
+  Target,
+  Moon,
+  Sun,
+  Bell,
 } from "lucide-react";
 import {
   useProfile,
@@ -27,8 +33,15 @@ export const SettingsPage: React.FC = () => {
 
   const [name, setName] = useState("");
   const [timezone, setTimezone] = useState("Asia/Kolkata");
+  const [branch, setBranch] = useState("");
+  const [targetRole, setTargetRole] = useState("");
+  const [focusArea, setFocusArea] = useState("");
+  const [timeline, setTimeline] = useState("2026 Batch");
+  const [primaryGoal, setPrimaryGoal] = useState("");
+
   const [morningHour, setMorningHour] = useState(8);
   const [eveningHour, setEveningHour] = useState(20);
+  const [eveningNotificationEnabled, setEveningNotificationEnabled] = useState(false);
   const [tone, setTone] = useState<"friendly" | "direct" | "encouraging">("friendly");
   const [telegramUrl, setTelegramUrl] = useState<string | null>(null);
 
@@ -36,10 +49,16 @@ export const SettingsPage: React.FC = () => {
     if (profileData?.profile) {
       setName(profileData.profile.name || "");
       setTimezone(profileData.profile.timezone || "Asia/Kolkata");
+      setBranch(profileData.profile.branch || "");
+      setTargetRole(profileData.profile.targetRole || "");
+      setFocusArea(profileData.profile.focusArea || "");
+      setTimeline(profileData.profile.timeline || "2026 Batch");
+      setPrimaryGoal(profileData.profile.primaryGoal || "");
     }
     if (profileData?.preferences) {
       setMorningHour(profileData.preferences.morningHour ?? 8);
       setEveningHour(profileData.preferences.eveningHour ?? 20);
+      setEveningNotificationEnabled(profileData.preferences.eveningNotificationEnabled ?? false);
       setTone(profileData.preferences.tone || "friendly");
     }
   }, [profileData]);
@@ -48,8 +67,21 @@ export const SettingsPage: React.FC = () => {
     e.preventDefault();
     try {
       await Promise.all([
-        updateProfile.mutateAsync({ name, timezone }),
-        updatePreferences.mutateAsync({ morningHour, eveningHour, tone }),
+        updateProfile.mutateAsync({
+          name,
+          timezone,
+          branch: branch.trim() || null,
+          targetRole: targetRole.trim() || null,
+          focusArea: focusArea.trim() || null,
+          timeline: timeline.trim() || null,
+          primaryGoal: primaryGoal.trim() || null,
+        }),
+        updatePreferences.mutateAsync({
+          morningHour,
+          eveningHour,
+          eveningNotificationEnabled,
+          tone,
+        }),
       ]);
     } catch (err: any) {
       toast.error(err.message || "Failed to update settings");
@@ -90,7 +122,7 @@ export const SettingsPage: React.FC = () => {
           <Settings className="w-6 h-6 text-indigo-400 inline" />
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Customize your assistant's tone, delivery schedule, and connected accounts.
+          Customize your placement profile, notification frequency, and companion personality.
         </p>
       </div>
 
@@ -99,7 +131,7 @@ export const SettingsPage: React.FC = () => {
         <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-white">
             <User className="w-4 h-4 text-indigo-400" />
-            <span>Profile Information</span>
+            <span>Placement Profile & Background</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -136,19 +168,118 @@ export const SettingsPage: React.FC = () => {
               </select>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800/60">
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <GraduationCap className="w-3.5 h-3.5 text-indigo-400" />
+                Branch / Degree
+              </label>
+              <input
+                type="text"
+                value={branch}
+                onChange={(e) => setBranch(e.target.value)}
+                placeholder="e.g. 4th Year ECE, CSE"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <Briefcase className="w-3.5 h-3.5 text-indigo-400" />
+                Target Role / Domain
+              </label>
+              <input
+                type="text"
+                value={targetRole}
+                onChange={(e) => setTargetRole(e.target.value)}
+                placeholder="e.g. Embedded Systems, Frontend Developer"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5 text-indigo-400" />
+                Current Focus Area
+              </label>
+              <input
+                type="text"
+                value={focusArea}
+                onChange={(e) => setFocusArea(e.target.value)}
+                placeholder="e.g. Resume & Projects, DSA, Aptitude"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                Placement Timeline
+              </label>
+              <select
+                value={timeline}
+                onChange={(e) => setTimeline(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500"
+              >
+                <option value="Immediate / Ongoing">Immediate / Ongoing Placements</option>
+                <option value="2026 Batch">2026 Batch (Next few months)</option>
+                <option value="6+ Months">6+ Months out (Early Prep)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              Primary Goal / Expectation
+            </label>
+            <input
+              type="text"
+              value={primaryGoal}
+              onChange={(e) => setPrimaryGoal(e.target.value)}
+              placeholder="e.g. Build daily consistency without feeling overwhelmed"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500"
+            />
+          </div>
         </div>
 
         {/* Schedule & Notification Hours */}
-        <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-white">
-            <Clock className="w-4 h-4 text-purple-400" />
-            <span>Notification Schedule</span>
+        <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-semibold text-white">
+              <Clock className="w-4 h-4 text-purple-400" />
+              <span>Notification Schedule</span>
+            </div>
+
+            {/* Twice a day toggle */}
+            <div className="flex items-center gap-2.5">
+              <span className="text-xs font-medium text-slate-300">
+                Twice-a-Day Check-in
+              </span>
+              <button
+                type="button"
+                onClick={() => setEveningNotificationEnabled(!eveningNotificationEnabled)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  eveningNotificationEnabled ? "bg-indigo-600" : "bg-slate-800"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                    eveningNotificationEnabled ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5 flex justify-between">
-                <span>Morning Micro-Action Delivery</span>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5 flex justify-between items-center">
+                <span className="flex items-center gap-1.5">
+                  <Sun className="w-3.5 h-3.5 text-amber-400" />
+                  Morning Micro-Action Delivery
+                </span>
                 <span className="text-indigo-400 font-semibold">{morningHour}:00 AM</span>
               </label>
               <input
@@ -160,25 +291,33 @@ export const SettingsPage: React.FC = () => {
                 className="w-full accent-indigo-500"
               />
               <p className="text-[11px] text-slate-500 mt-1">
-                Murmur evaluates localized timezone cron tasks on the hour.
+                Your focused 15-minute daily micro-action arrives at this hour.
               </p>
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5 flex justify-between">
-                <span>Evening Reflection Target</span>
-                <span className="text-purple-400 font-semibold">{eveningHour}:00 PM</span>
+            <div className={eveningNotificationEnabled ? "opacity-100 transition" : "opacity-40 transition"}>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5 flex justify-between items-center">
+                <span className="flex items-center gap-1.5">
+                  <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                  Evening Reflection Delivery
+                </span>
+                <span className="text-purple-400 font-semibold">
+                  {eveningHour > 12 ? eveningHour - 12 : eveningHour}:00 {eveningHour >= 12 ? "PM" : "AM"}
+                </span>
               </label>
               <input
                 type="range"
                 min={17}
                 max={23}
+                disabled={!eveningNotificationEnabled}
                 value={eveningHour}
                 onChange={(e) => setEveningHour(Number(e.target.value))}
-                className="w-full accent-purple-500"
+                className="w-full accent-purple-500 disabled:cursor-not-allowed"
               />
               <p className="text-[11px] text-slate-500 mt-1">
-                Target hour for end-of-day task wrap-up.
+                {eveningNotificationEnabled
+                  ? "Gentle end-of-day check-in to celebrate small wins or unwind."
+                  : "Turn on Twice-a-Day Check-in above to activate evening reflections."}
               </p>
             </div>
           </div>

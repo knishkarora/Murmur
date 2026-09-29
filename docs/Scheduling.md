@@ -11,12 +11,18 @@ The background worker schedules several recurring jobs:
 | Job Name | Trigger Frequency | Scope / Logic | Status |
 |----------|-------------------|---------------|--------|
 | `daily_morning` | Every Hour (00 min) | Queries users whose current timezone local time is between **8 AM and 9 AM** (default or preferred hour) and generates a daily action task. | **Active** |
+| `daily_evening` | Every Hour (00 min) | Queries users with `eveningNotificationEnabled: true` whose preferred evening hour matches the current local hour, generating a gentle reflection prompt. | **Active (Opt-in)** |
 | `weekly_planner` | Every Hour (00 min) | Runs on Sundays. Queries users whose current timezone local time is **6 PM** and generates a weekly summary + upcoming plan. | **Active** |
 | `memory_summarize` | Nightly at 2 AM UTC | Aggregates user logs and generates the updated conversation rolling summary. | **Active** |
 | `embedding_backfill` | Nightly at 3 AM UTC | Runs vector calculations on any unprocessed database messages. | **Active** |
-| `daily_evening` | User's preferred evening hour | Reflection prompt or review of daily completed task. | **Deferred (YAGNI)** |
 
 ---
+
+## Render Free Tier & Pre-Warming Strategy
+
+Render's free tier spins down instances after **15 minutes** of inactivity. Because background `node-cron` timers are frozen while an instance sleeps:
+1. **Pre-Warming Wakeup:** An external pinger (e.g., [Cron-job.org](https://cron-job.org) or UptimeRobot) can ping `GET /health` or `GET /api/health` ~10 minutes prior to a scheduled hour (e.g., at 7:50 AM for an 8:00 AM delivery). This ensures the instance is warm and `node-cron` fires right on the hour.
+2. **Alternative Keep-Alive:** Pinging `/health` every 10–14 minutes keeps the free tier instance awake 24/7 without consuming API quota.
 
 ## Timezone Translation & Evaluation
 

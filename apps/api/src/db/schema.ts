@@ -23,6 +23,11 @@ export const profiles = pgTable("profiles", {
   timezone: text("timezone").notNull().default("Asia/Kolkata"),
   onboardingDone: boolean("onboarding_done").notNull().default(false),
   conversationSummary: text("conversation_summary"),
+  branch: text("branch"),
+  targetRole: text("target_role"),
+  focusArea: text("focus_area"),
+  timeline: text("timeline"),
+  primaryGoal: text("primary_goal"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -39,6 +44,7 @@ export const userPreferences = pgTable("user_preferences", {
   userId: uuid("user_id").notNull().unique(),
   morningHour: integer("morning_hour").notNull().default(8),
   eveningHour: integer("evening_hour").notNull().default(20),
+  eveningNotificationEnabled: boolean("evening_notification_enabled").notNull().default(false),
   weeklyDay: integer("weekly_day").notNull().default(0),
   tone: toneEnum("tone").notNull().default("friendly"),
 });

@@ -5,11 +5,7 @@ import { env, logger } from "./config.js";
 import { db } from "./db/index.js";
 import { linkTokens, telegramAccounts, profiles, messages } from "./db/schema.js";
 import { generateReply } from "./services/aiService.js";
-import {
-  assembleUserContext,
-  storeMessageEmbedding,
-  triggerMemoryExtractionAndSummary,
-} from "./services/contextService.js";
+import { assembleUserContext } from "./services/contextService.js";
 
 export const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
 
@@ -99,9 +95,18 @@ bot.command("start", async (ctx) => {
   }
 });
 
+interface PendingMessageQueue {
+  texts: string[];
+  timer: NodeJS.Timeout;
+  lastCtx: any;
+  userId: string;
+}
+
+const userQueues = new Map<number, PendingMessageQueue>();
+
 bot.on("message:text", async (ctx) => {
   const telegramUserId = ctx.from.id;
-  const userText = ctx.message.text;
+  const userText = ctx.message.text.trim();
 
   if (userText.startsWith("/")) return;
 
@@ -122,50 +127,97 @@ bot.on("message:text", async (ctx) => {
 
     const userId = account.userId;
 
-    const [insertedUserMsg] = await db
-      .insert(messages)
-      .values({
+    // Immediately signal typing feedback in Telegram client
+    void ctx.replyWithChatAction("typing");
+
+    const existingQueue = userQueues.get(telegramUserId);
+
+    if (existingQueue) {
+      clearTimeout(existingQueue.timer);
+      existingQueue.texts.push(userText);
+      existingQueue.lastCtx = ctx;
+
+      // Gentle flood warning if user sends excessive burst of messages
+      if (existingQueue.texts.length === 5) {
+        void ctx.reply("💭 Processing your thoughts, one moment...");
+      }
+
+      existingQueue.timer = setTimeout(
+        () => void processPendingBatch(telegramUserId),
+        2500
+      );
+    } else {
+      const timer = setTimeout(
+        () => void processPendingBatch(telegramUserId),
+        2500
+      );
+      userQueues.set(telegramUserId, {
+        texts: [userText],
+        timer,
+        lastCtx: ctx,
         userId,
-        role: "user",
-        content: userText,
-        createdAt: new Date(),
-      })
-      .returning({ id: messages.id });
-
-    if (insertedUserMsg) {
-      void storeMessageEmbedding(insertedUserMsg.id, userId, userText);
+      });
     }
-
-    const aiContext = await assembleUserContext(userId, userText);
-    const aiReplyText = await generateReply(aiContext, userText);
-
-    const [insertedAiMsg] = await db
-      .insert(messages)
-      .values({
-        userId,
-        role: "assistant",
-        content: aiReplyText,
-        createdAt: new Date(),
-      })
-      .returning({ id: messages.id });
-
-    if (insertedAiMsg) {
-      void storeMessageEmbedding(insertedAiMsg.id, userId, aiReplyText);
-    }
-
-    await ctx.reply(aiReplyText);
-
-    void triggerMemoryExtractionAndSummary(userId);
   } catch (err) {
     logger.error(
       { err, telegramUserId },
-      "Error handling incoming Telegram message"
-    );
-    await ctx.reply(
-      "I'm having a brief moment — please try again in a minute. Your progress still counts."
+      "Error initiating Telegram message queue"
     );
   }
 });
+
+async function processPendingBatch(telegramUserId: number): Promise<void> {
+  const queue = userQueues.get(telegramUserId);
+  if (!queue) return;
+  userQueues.delete(telegramUserId);
+
+  const { texts, lastCtx, userId } = queue;
+  const combinedUserText = texts.join("\n");
+
+  try {
+    // 1. Persist user message to Postgres (accessible immediately to recent-messages context)
+    await db.insert(messages).values({
+      userId,
+      role: "user",
+      content: combinedUserText,
+      createdAt: new Date(),
+    });
+
+    // 2. Build context using Postgres recent history + placement facts (0 API calls)
+    const aiContext = await assembleUserContext(userId, combinedUserText);
+
+    // 3. Generate response using 1 single Gemini call (maxOutputTokens: 2048)
+    const aiReplyText = await generateReply(aiContext, combinedUserText);
+
+    // 4. Persist assistant reply to Postgres
+    await db.insert(messages).values({
+      userId,
+      role: "assistant",
+      content: aiReplyText,
+      createdAt: new Date(),
+    });
+
+    // 5. Send reply to Telegram
+    await lastCtx.reply(aiReplyText);
+
+    logger.info(
+      { userId, telegramUserId, messageCount: texts.length },
+      "Successfully processed and delivered debounced AI reply"
+    );
+  } catch (err) {
+    logger.error(
+      { err, telegramUserId, userId },
+      "Error processing debounced AI reply"
+    );
+    try {
+      await lastCtx.reply(
+        "I'm having a brief moment — please try again in a minute. Your progress still counts."
+      );
+    } catch {
+      // Ignore secondary network reply errors
+    }
+  }
+}
 
 bot.catch((err) => {
   logger.error(

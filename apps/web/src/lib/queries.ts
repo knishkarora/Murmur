@@ -11,12 +11,18 @@ export interface ProfileData {
     timezone: string;
     onboardingDone: boolean;
     conversationSummary: string | null;
+    branch?: string | null;
+    targetRole?: string | null;
+    focusArea?: string | null;
+    timeline?: string | null;
+    primaryGoal?: string | null;
     createdAt: string;
   };
   preferences: {
     userId: string;
     morningHour: number;
     eveningHour: number;
+    eveningNotificationEnabled: boolean;
     weeklyDay: number;
     tone: "friendly" | "direct" | "encouraging";
   };
@@ -69,7 +75,16 @@ export function useProfile() {
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { name?: string | null; timezone?: string; onboardingDone?: boolean }) =>
+    mutationFn: (data: {
+      name?: string | null;
+      timezone?: string;
+      onboardingDone?: boolean;
+      branch?: string | null;
+      targetRole?: string | null;
+      focusArea?: string | null;
+      timeline?: string | null;
+      primaryGoal?: string | null;
+    }) =>
       apiRequest("/me/profile", {
         method: "PATCH",
         body: JSON.stringify(data),
@@ -83,7 +98,13 @@ export function useUpdateProfile() {
 export function useUpdatePreferences() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { morningHour?: number; eveningHour?: number; weeklyDay?: number; tone?: string }) =>
+    mutationFn: (data: {
+      morningHour?: number;
+      eveningHour?: number;
+      eveningNotificationEnabled?: boolean;
+      weeklyDay?: number;
+      tone?: string;
+    }) =>
       apiRequest("/me/preferences", {
         method: "PATCH",
         body: JSON.stringify(data),

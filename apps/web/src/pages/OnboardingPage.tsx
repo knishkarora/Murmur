@@ -10,6 +10,9 @@ import {
   ExternalLink,
   ShieldCheck,
   Loader2,
+  GraduationCap,
+  Briefcase,
+  Target,
 } from "lucide-react";
 import { useProfile, useUpdateProfile, useGenerateTelegramLink } from "../lib/queries.js";
 import { toast } from "sonner";
@@ -24,15 +27,23 @@ export const OnboardingPage: React.FC = () => {
   const [timezone, setTimezone] = useState(
     Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata"
   );
+  const [branch, setBranch] = useState("");
+  const [targetRole, setTargetRole] = useState("");
+  const [focusArea, setFocusArea] = useState("");
+  const [timeline, setTimeline] = useState("2026 Batch");
+  const [primaryGoal, setPrimaryGoal] = useState("");
   const [telegramUrl, setTelegramUrl] = useState<string | null>(null);
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 
   useEffect(() => {
-    if (profileData?.profile?.name) {
-      setName(profileData.profile.name);
-    }
-    if (profileData?.profile?.timezone) {
-      setTimezone(profileData.profile.timezone);
+    if (profileData?.profile) {
+      if (profileData.profile.name) setName(profileData.profile.name);
+      if (profileData.profile.timezone) setTimezone(profileData.profile.timezone);
+      if (profileData.profile.branch) setBranch(profileData.profile.branch);
+      if (profileData.profile.targetRole) setTargetRole(profileData.profile.targetRole);
+      if (profileData.profile.focusArea) setFocusArea(profileData.profile.focusArea);
+      if (profileData.profile.timeline) setTimeline(profileData.profile.timeline);
+      if (profileData.profile.primaryGoal) setPrimaryGoal(profileData.profile.primaryGoal);
     }
   }, [profileData]);
 
@@ -60,6 +71,11 @@ export const OnboardingPage: React.FC = () => {
       await updateProfile.mutateAsync({
         name: name.trim() || "Mio",
         timezone,
+        branch: branch.trim() || null,
+        targetRole: targetRole.trim() || null,
+        focusArea: focusArea.trim() || null,
+        timeline: timeline.trim() || null,
+        primaryGoal: primaryGoal.trim() || null,
         onboardingDone: true,
       });
       toast.success("Welcome aboard! Workspace activated.");
@@ -90,54 +106,126 @@ export const OnboardingPage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-xl font-bold text-white">Welcome to Murmur</h1>
-            <p className="text-xs text-slate-400">Configure your companion in two quick steps</p>
+            <p className="text-xs text-slate-400">Configure your companion and placement focus</p>
           </div>
         </div>
 
         <form onSubmit={handleFinishOnboarding} className="space-y-6">
-          {/* Step 1: Personal Profile */}
+          {/* Step 1: Personal & Placement Profile */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-400">
               <User className="w-4 h-4" />
-              <span>Step 1: Your Profile</span>
+              <span>Step 1: Placement Profile</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  Preferred Name
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Alex"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
+                  Branch / Degree
+                </label>
+                <input
+                  type="text"
+                  value={branch}
+                  onChange={(e) => setBranch(e.target.value)}
+                  placeholder="e.g. 4th Year ECE, CSE, IT"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+                  Target Role / Domain
+                </label>
+                <input
+                  type="text"
+                  value={targetRole}
+                  onChange={(e) => setTargetRole(e.target.value)}
+                  placeholder="e.g. Frontend, Embedded, SDE"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <Target className="w-3.5 h-3.5 text-slate-400" />
+                  Current Focus Area
+                </label>
+                <input
+                  type="text"
+                  value={focusArea}
+                  onChange={(e) => setFocusArea(e.target.value)}
+                  placeholder="e.g. Resume, DSA, Aptitude"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  Target Placement Timeline
+                </label>
+                <select
+                  value={timeline}
+                  onChange={(e) => setTimeline(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
+                >
+                  <option value="Immediate / Ongoing">Immediate / Ongoing Placements</option>
+                  <option value="2026 Batch">2026 Batch (Next few months)</option>
+                  <option value="6+ Months">6+ Months out (Early Prep)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  Timezone
+                </label>
+                <select
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
+                >
+                  <option value="Asia/Kolkata">Asia/Kolkata (IST - UTC+05:30)</option>
+                  <option value="America/New_York">America/New_York (EST - UTC-05:00)</option>
+                  <option value="America/Los_Angeles">America/Los_Angeles (PST - UTC-08:00)</option>
+                  <option value="Europe/London">Europe/London (GMT/BST - UTC+00:00)</option>
+                  <option value="Europe/Berlin">Europe/Berlin (CET - UTC+01:00)</option>
+                  <option value="Asia/Singapore">Asia/Singapore (SGT - UTC+08:00)</option>
+                  <option value="Asia/Tokyo">Asia/Tokyo (JST - UTC+09:00)</option>
+                  <option value="UTC">UTC (Universal Coordinated Time)</option>
+                </select>
+              </div>
             </div>
 
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Preferred Name
+                Primary Goal / Expectation from Murmur
               </label>
               <input
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Alex"
+                value={primaryGoal}
+                onChange={(e) => setPrimaryGoal(e.target.value)}
+                placeholder="e.g. Build daily 15-min consistency without stress"
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
               />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-slate-400" />
-                Primary Timezone
-              </label>
-              <select
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
-              >
-                <option value="Asia/Kolkata">Asia/Kolkata (IST - UTC+05:30)</option>
-                <option value="America/New_York">America/New_York (EST - UTC-05:00)</option>
-                <option value="America/Los_Angeles">America/Los_Angeles (PST - UTC-08:00)</option>
-                <option value="Europe/London">Europe/London (GMT/BST - UTC+00:00)</option>
-                <option value="Europe/Berlin">Europe/Berlin (CET - UTC+01:00)</option>
-                <option value="Asia/Singapore">Asia/Singapore (SGT - UTC+08:00)</option>
-                <option value="Asia/Tokyo">Asia/Tokyo (JST - UTC+09:00)</option>
-                <option value="UTC">UTC (Universal Coordinated Time)</option>
-              </select>
-              <p className="text-[11px] text-slate-400 mt-1">
-                Your morning micro-action and weekly Sunday reviews will arrive according to this
-                schedule.
-              </p>
             </div>
           </div>
 

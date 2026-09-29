@@ -7,6 +7,11 @@ export const profileSchema = z.object({
   timezone: z.string().default("Asia/Kolkata"),
   onboardingDone: z.boolean().default(false),
   conversationSummary: z.string().nullable(),
+  branch: z.string().nullable().optional(),
+  targetRole: z.string().nullable().optional(),
+  focusArea: z.string().nullable().optional(),
+  timeline: z.string().nullable().optional(),
+  primaryGoal: z.string().nullable().optional(),
   createdAt: z.string().datetime(),
 });
 
@@ -14,6 +19,7 @@ export const userPreferencesSchema = z.object({
   userId: z.string().uuid(),
   morningHour: z.number().min(0).max(23).default(8),
   eveningHour: z.number().min(0).max(23).default(20),
+  eveningNotificationEnabled: z.boolean().default(false),
   weeklyDay: z.number().min(0).max(6).default(0),
   tone: z.enum(["friendly", "direct", "encouraging"]).default("friendly"),
 });

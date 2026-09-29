@@ -50,8 +50,8 @@ apiRouter.use(memoriesRouter);
 app.use(apiRouter);
 app.use("/api", apiRouter);
 
-// Public health check route
-app.get("/health", (_req, res) => {
+// Public health check route (used by external cron to keep alive or pre-warm Render instance)
+app.get(["/health", "/api/health"], (_req, res) => {
   res.json({
     status: "ok",
     service: "api",
