@@ -7,11 +7,12 @@ Murmur's conversational backend utilizes Google Gemini with a multi-layered cont
 ## Models
 
 We utilize Google's Gemini Models via the native SDK `@google/generative-ai`:
-- **Primary LLM:** `gemini-2.0-flash`
+- **Primary LLM:** `gemini-3.8-flash`
   - High performance, low latency, generous token limit.
   - Used for daily chat replies, daily actions, weekly planning, structured profiling, and summary generation.
-- **Embeddings Model:** `text-embedding-004`
-  - Returns a vector dimension of `768`.
+  - **High Demand Fallback Cascade:** Automatically falls back in order to `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash-lite`, `gemini-flash-lite-latest`, `gemini-3.5-flash`, and `gemini-flash-latest` during temporary server capacity spikes (503s).
+- **Embeddings Model:** `gemini-embedding-001`
+  - Returns a vector dimension of `768` (sliced from output vector).
   - Used to index messages semantically for similarity queries.
 
 ---

@@ -13,13 +13,21 @@ import { logger } from "../config.js";
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
 // Active model candidates per Google Generative Language API
-const CANDIDATE_MODELS = [
-  process.env.GEMINI_MODEL,
-  "gemini-3.8-flash", // Recommended directly by Google API error response
-  "gemini-2.5-flash",
-  "gemini-3.5-flash",
-  "gemini-1.5-flash",
-].filter(Boolean) as string[];
+// Prioritize gemini-3.8-flash first; fall back to active and healthy alternatives on demand spikes (503)
+const CANDIDATE_MODELS = Array.from(
+  new Set(
+    [
+      process.env.GEMINI_MODEL,
+      "gemini-3.8-flash", // Preferred primary model
+      "gemini-3.7-flash",
+      "gemini-3.6-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-flash-lite-latest",
+      "gemini-3.5-flash",
+      "gemini-flash-latest",
+    ].filter(Boolean) as string[],
+  ),
+);
 
 const EMBEDDING_MODELS = [
   "gemini-embedding-001",
