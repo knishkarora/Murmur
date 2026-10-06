@@ -31,11 +31,11 @@ The client application exposes 6 primary view routes:
 | Route Path | View Page Name | Key Features |
 |------------|----------------|--------------|
 | `/` | **Landing / Login** | Product hook introduction, email-password signup/login forms. |
-| `/onboarding` | **User Onboarding** | Profile details (name, segment), timezone picker, Telegram link deep link. |
+| `/onboarding` | **User Onboarding** | Profile details (name, timezone), standardized dropdowns (Branch/Degree, Target Role/Domain), multi-select focus area tags, Telegram deep link. |
 | `/dashboard` | **Main Workspace** | Daily action task checkoff card, completion trackers, recent achievements. |
 | `/conversations` | **Chat Archive** | Filterable list of all daily bot conversation histories and transcripts. |
 | `/insights` | **Weekly Insights** | Memory timelines, weekly plan archives, progress overviews. |
-| `/settings` | **Account Settings** | Notification hours (morning/evening), IANA timezone changer, assistant tone. |
+| `/settings` | **Account Settings** | Notification hours (11:00 AM default morning, 8:00 PM evening), Free Trial schedule lock modal, standardized placement dropdowns, focus area tag management, assistant tone. |
 
 ---
 

@@ -42,7 +42,7 @@ export const telegramAccounts = pgTable("telegram_accounts", {
 export const userPreferences = pgTable("user_preferences", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().unique(),
-  morningHour: integer("morning_hour").notNull().default(8),
+  morningHour: integer("morning_hour").notNull().default(11),
   eveningHour: integer("evening_hour").notNull().default(20),
   eveningNotificationEnabled: boolean("evening_notification_enabled").notNull().default(false),
   weeklyDay: integer("weekly_day").notNull().default(0),

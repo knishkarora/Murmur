@@ -202,7 +202,7 @@ export const DashboardPage: React.FC = () => {
           </p>
           <p className="text-[11px] text-slate-500">
             {isTelegramLinked
-              ? "Nudges trigger at " + (preferences?.morningHour ?? 8) + ":00 AM"
+              ? "Nudges trigger at " + (preferences?.morningHour ?? 11) + ":00 AM"
               : "Connect in settings for morning reminders"}
           </p>
         </div>

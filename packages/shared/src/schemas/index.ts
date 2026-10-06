@@ -17,7 +17,7 @@ export const profileSchema = z.object({
 
 export const userPreferencesSchema = z.object({
   userId: z.string().uuid(),
-  morningHour: z.number().min(0).max(23).default(8),
+  morningHour: z.number().min(0).max(23).default(11),
   eveningHour: z.number().min(0).max(23).default(20),
   eveningNotificationEnabled: z.boolean().default(false),
   weeklyDay: z.number().min(0).max(6).default(0),

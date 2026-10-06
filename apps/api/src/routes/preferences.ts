@@ -43,7 +43,7 @@ router.get("/me/preferences", requireAuth, async (req: AuthedRequest, res, next)
       status: "ok",
       preferences: {
         userId,
-        morningHour: 8,
+        morningHour: 11,
         eveningHour: 20,
         eveningNotificationEnabled: false,
         weeklyDay: 0,

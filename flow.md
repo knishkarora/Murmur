@@ -176,5 +176,39 @@ This document tracks execution flows across application boundaries in Murmur.
 - **Auth Token Propagation:** Supabase Auth JWT / local demo token passed via `Authorization: Bearer <token>` on all API requests.
 - **7-Day Chart Bucket Aggregation:** Array of `daily_actions` reduced into day-name buckets (`Sun-Sat`) and counted for Recharts visualization.
 
+---
+
+## 7. Placement Attribute Standardization & Free-Trial Schedule Guardrails
+
+### Entry Point
+- User opens Web Onboarding (`/onboarding`) or Account Settings (`/settings`).
+- User selects Branch / Degree or Target Role / Domain from curated dropdowns, selects one or more Focus Area chips, or attempts to adjust notification time sliders.
+
+### Execution Sequence
+1. **[web] Form Rendering & Option Hydration:**
+   - Predefined constants (`BRANCH_OPTIONS`, `TARGET_ROLE_OPTIONS`, `FOCUS_AREA_OPTIONS`) are sourced from `@companion/shared/constants`.
+   - Any previously saved custom string (or split comma-separated focus areas) is hydrated into the form state without data loss.
+2. **[web] Multi-Select Skill Tag Interaction:**
+   - User clicks dropdown item under Current Focus Area -> appends item to `focusAreas` array.
+   - Interactive badge chips render with an `X` delete action.
+   - On submission, array is serialized as `focusAreas.join(", ")` to maintain backward compatibility with `profiles.focus_area` text column in PostgreSQL.
+3. **[web] Schedule Sliders & Free Trial Protection:**
+   - Default morning hour set to `11` (11:00 AM) and evening hour set to `20` (8:00 PM) with evening toggle off.
+   - Sliders intercept `onMouseDown`, `onTouchStart`, `onKeyDown`, `onChange`, and `onInput`.
+   - Any attempt to slide opens `showFreeTrialModal` and triggers `toast.error("You are not allowed to change the time under the free trial. Upgrade to change the time.")`, preventing value alteration.
+4. **[api] Persistence & Ingestion:**
+   - Payload submitted via `PATCH /me/profile` and `PATCH /me/preferences`.
+   - Zod validation and Drizzle ORM store updated attributes, and `contextService.ts` supplies the updated values directly into Gemini system prompt memories.
+
+### Modified Scope (Current Session)
+- `[NEW]` [`packages/shared/src/constants/index.ts`](packages/shared/src/constants/index.ts): Curated constants for Branch, Target Role, and Focus Areas.
+- `[MODIFY]` [`packages/shared/src/index.ts`](packages/shared/src/index.ts), [`packages/shared/package.json`](packages/shared/package.json): Exported `./constants`.
+- `[MODIFY]` [`packages/shared/src/schemas/index.ts`](packages/shared/src/schemas/index.ts): Updated `morningHour` default to 11.
+- `[MODIFY]` [`apps/api/src/db/schema.ts`](apps/api/src/db/schema.ts), [`devStore.ts`](apps/api/src/db/devStore.ts), [`routes/preferences.ts`](apps/api/src/routes/preferences.ts), [`routes/profile.ts`](apps/api/src/routes/profile.ts): Synchronized backend `morningHour` default to 11.
+- `[MODIFY]` [`apps/web/src/pages/OnboardingPage.tsx`](apps/web/src/pages/OnboardingPage.tsx): Branch and Target Role select dropdowns, multi-select tag chips for Focus Areas.
+- `[MODIFY]` [`apps/web/src/pages/SettingsPage.tsx`](apps/web/src/pages/SettingsPage.tsx): Standardized dropdowns, multi-select tag chips, Free Trial Restriction modal & toast on slider interaction, 11:00 AM morning default.
+- `[MODIFY]` [`apps/web/src/pages/DashboardPage.tsx`](apps/web/src/pages/DashboardPage.tsx): Morning nudge reminder string fallback to 11.
+
+
 
 

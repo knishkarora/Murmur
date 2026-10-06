@@ -69,7 +69,7 @@ router.get("/me/profile", requireAuth, async (req: AuthedRequest, res, next) => 
       status: "ok",
       profile,
       preferences: prefs || {
-        morningHour: 8,
+        morningHour: 11,
         eveningHour: 20,
         eveningNotificationEnabled: false,
         weeklyDay: 0,

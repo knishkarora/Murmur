@@ -113,3 +113,22 @@
   * Embeddings are not immediately searchable via pgvector until the nightly backfill runs; completely acceptable because the last 20 messages are already passed directly in plain text.
 * **Immutability Status:** Settled & Immutable.
 
+---
+
+## [2026-10-07] Decision: Standardized Placement Taxonomies, Multi-Select Focus Badges, 11 AM Morning Default & Free-Trial Schedule Protection
+
+* **Context & Scope:** Standardizing placement options (Branch/Degree, Target Role/Domain, Focus Area) across Web Onboarding and Settings to eliminate unstructured text variances; enabling multi-selection of focus areas like skills; shifting default morning delivery to 11:00 AM; and restricting schedule sliders under the free trial.
+* **Choice Made:**
+  1. Define unified, curated option lists (`BRANCH_OPTIONS`, `TARGET_ROLE_OPTIONS`, `FOCUS_AREA_OPTIONS`) in `@companion/shared/constants` for monorepo-wide reuse.
+  2. Implement skill-style multi-select chip UI for Current Focus Area, serializing to comma-separated string for 100% backward compatibility with `profiles.focus_area` text column.
+  3. Shift `morningHour` defaults to 11 (11:00 AM) across database schema, Zod validation, Express routes, and React client state, keeping 8:00 PM evening and disabled toggle.
+  4. Intercept schedule slider interactions across pointer, touch, keyboard, and change events to display a dedicated modal dialog and toast notification: "You are not allowed to change the time under the free trial. Upgrade to change the time."
+* **Rationale (Why over What):**
+  * Free-text inputs produced inconsistent and fragmented inputs (e.g., "sde", "SDE", "software developer"), which reduced prompt determinism for Gemini. Standardized dropdowns enforce hygiene while allowing previous custom inputs to remain visible.
+  * Serializing multi-selected focus area badges into a comma-delimited string preserves database schema stability without necessitating a complex junction table migration.
+  * Intercepting slider touch and mouse events directly prevents the slider thumb from moving, delivering instant user feedback without confusing state rollbacks.
+* **Tradeoffs Accepted:**
+  * Free trial time adjustment lock is enforced at the UI interaction boundary; comprehensive billing tier authorization checks will accompany Stripe integration.
+* **Immutability Status:** Settled & Immutable.
+
+

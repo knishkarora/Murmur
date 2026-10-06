@@ -13,8 +13,14 @@ import {
   GraduationCap,
   Briefcase,
   Target,
+  X,
 } from "lucide-react";
 import { useProfile, useUpdateProfile, useGenerateTelegramLink } from "../lib/queries.js";
+import {
+  BRANCH_OPTIONS,
+  TARGET_ROLE_OPTIONS,
+  FOCUS_AREA_OPTIONS,
+} from "@companion/shared/constants";
 import { toast } from "sonner";
 
 export const OnboardingPage: React.FC = () => {
@@ -29,7 +35,7 @@ export const OnboardingPage: React.FC = () => {
   );
   const [branch, setBranch] = useState("");
   const [targetRole, setTargetRole] = useState("");
-  const [focusArea, setFocusArea] = useState("");
+  const [focusAreas, setFocusAreas] = useState<string[]>([]);
   const [timeline, setTimeline] = useState("2026 Batch");
   const [primaryGoal, setPrimaryGoal] = useState("");
   const [telegramUrl, setTelegramUrl] = useState<string | null>(null);
@@ -41,11 +47,27 @@ export const OnboardingPage: React.FC = () => {
       if (profileData.profile.timezone) setTimezone(profileData.profile.timezone);
       if (profileData.profile.branch) setBranch(profileData.profile.branch);
       if (profileData.profile.targetRole) setTargetRole(profileData.profile.targetRole);
-      if (profileData.profile.focusArea) setFocusArea(profileData.profile.focusArea);
+      if (profileData.profile.focusArea) {
+        const parsed = profileData.profile.focusArea
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        setFocusAreas(parsed);
+      }
       if (profileData.profile.timeline) setTimeline(profileData.profile.timeline);
       if (profileData.profile.primaryGoal) setPrimaryGoal(profileData.profile.primaryGoal);
     }
   }, [profileData]);
+
+  const handleAddFocusArea = (area: string) => {
+    if (area && !focusAreas.includes(area)) {
+      setFocusAreas((prev) => [...prev, area]);
+    }
+  };
+
+  const handleRemoveFocusArea = (areaToRemove: string) => {
+    setFocusAreas((prev) => prev.filter((a) => a !== areaToRemove));
+  };
 
   const handleGenerateTelegramLink = async () => {
     setIsGeneratingLink(true);
@@ -73,7 +95,7 @@ export const OnboardingPage: React.FC = () => {
         timezone,
         branch: branch.trim() || null,
         targetRole: targetRole.trim() || null,
-        focusArea: focusArea.trim() || null,
+        focusArea: focusAreas.join(", ").trim() || null,
         timeline: timeline.trim() || null,
         primaryGoal: primaryGoal.trim() || null,
         onboardingDone: true,
@@ -137,13 +159,23 @@ export const OnboardingPage: React.FC = () => {
                   <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
                   Branch / Degree
                 </label>
-                <input
-                  type="text"
+                <select
                   value={branch}
                   onChange={(e) => setBranch(e.target.value)}
-                  placeholder="e.g. 4th Year ECE, CSE, IT"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
-                />
+                >
+                  <option value="" disabled>
+                    Select Branch / Degree
+                  </option>
+                  {branch && !BRANCH_OPTIONS.includes(branch as any) && (
+                    <option value={branch}>{branch}</option>
+                  )}
+                  {BRANCH_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -153,13 +185,23 @@ export const OnboardingPage: React.FC = () => {
                   <Briefcase className="w-3.5 h-3.5 text-slate-400" />
                   Target Role / Domain
                 </label>
-                <input
-                  type="text"
+                <select
                   value={targetRole}
                   onChange={(e) => setTargetRole(e.target.value)}
-                  placeholder="e.g. Frontend, Embedded, SDE"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
-                />
+                >
+                  <option value="" disabled>
+                    Select Target Role / Domain
+                  </option>
+                  {targetRole && !TARGET_ROLE_OPTIONS.includes(targetRole as any) && (
+                    <option value={targetRole}>{targetRole}</option>
+                  )}
+                  {TARGET_ROLE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -167,13 +209,44 @@ export const OnboardingPage: React.FC = () => {
                   <Target className="w-3.5 h-3.5 text-slate-400" />
                   Current Focus Area
                 </label>
-                <input
-                  type="text"
-                  value={focusArea}
-                  onChange={(e) => setFocusArea(e.target.value)}
-                  placeholder="e.g. Resume, DSA, Aptitude"
+                {focusAreas.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {focusAreas.map((area) => (
+                      <span
+                        key={area}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-950/70 border border-indigo-700/60 text-indigo-300 text-xs font-medium"
+                      >
+                        <span>{area}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFocusArea(area)}
+                          className="text-indigo-400 hover:text-red-400 transition"
+                          title="Remove focus area"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      handleAddFocusArea(e.target.value);
+                    }
+                  }}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
-                />
+                >
+                  <option value="" disabled>
+                    {focusAreas.length === 0 ? "Select focus area..." : "+ Add another focus area..."}
+                  </option>
+                  {FOCUS_AREA_OPTIONS.filter((opt) => !focusAreas.includes(opt)).map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 

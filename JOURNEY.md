@@ -162,4 +162,31 @@ Murmur now provides a complete, modern visual workspace alongside its Telegram i
 ### Why this mattered
 Murmur now runs reliably within the constraints of free-tier infrastructure. The bot responds without mid-message cutoffs, rapid user typing is smoothly consolidated without burning API quotas, and the AI knows the student's career background immediately on day one without asking repetitive setup questions.
 
+---
+
+## 2026-10-07: Placement Dropdown Taxonomies, Multi-Select Focus Badges, 11 AM Morning Default & Free-Trial Guardrails
+
+### What was accomplished
+- **Standardized Placement Taxonomies:**
+  - Replaced unstructured text inputs with unified, curated select dropdowns for **Branch / Degree** and **Target Role / Domain** across both `OnboardingPage.tsx` and `SettingsPage.tsx`.
+  - Added monorepo constants in `packages/shared/src/constants/index.ts` with comprehensive technical engineering branches and tech industry roles.
+  - Preserved backward compatibility for previously entered custom strings.
+- **Skill-Style Multi-Select Current Focus Areas:**
+  - Replaced single text inputs with interactive multi-select tag badges and selection dropdowns (similar to platform skill pickers).
+  - Allows students to select multiple key focus areas (DSA, System Design, Projects, Aptitude, Core CS, etc.) with `X` delete chips.
+  - Serialized as comma-separated values to preserve database schema compatibility with zero migration overhead.
+- **11:00 AM Default Morning Delivery:**
+  - Updated morning hour default from 8:00 AM to 11:00 AM across database schema (`schema.ts`), Zod schemas (`index.ts`), Express routes (`preferences.ts`, `profile.ts`), and React components (`SettingsPage.tsx`, `DashboardPage.tsx`).
+  - Evening reflection default preserved at 8:00 PM (20:00) with toggle default off.
+- **Free-Trial Time Adjustment Restriction:**
+  - Added interaction guardrails to schedule sliders in `SettingsPage.tsx`.
+  - Attempting to slide or adjust the delivery hours displays a dedicated modal dialog and Sonner toast: *"You are not allowed to change the time under the free trial. Upgrade to change the time."*
+  - Locks slider values to trial defaults.
+- **Typecheck & Production Build Verification:**
+  - Monorepo verified with clean TypeScript compilation (`tsc --noEmit`) and Vite production bundle.
+
+### Why this mattered
+Ensures consistent user input taxonomy for AI prompt conditioning, allows students to declare multiple focus areas at once, and protects schedule delivery configurations under free-trial business rules.
+
+
 

@@ -16,6 +16,8 @@ import {
   Moon,
   Sun,
   Bell,
+  X,
+  Lock,
 } from "lucide-react";
 import {
   useProfile,
@@ -23,6 +25,11 @@ import {
   useUpdatePreferences,
   useGenerateTelegramLink,
 } from "../lib/queries.js";
+import {
+  BRANCH_OPTIONS,
+  TARGET_ROLE_OPTIONS,
+  FOCUS_AREA_OPTIONS,
+} from "@companion/shared/constants";
 import { toast } from "sonner";
 
 export const SettingsPage: React.FC = () => {
@@ -35,13 +42,14 @@ export const SettingsPage: React.FC = () => {
   const [timezone, setTimezone] = useState("Asia/Kolkata");
   const [branch, setBranch] = useState("");
   const [targetRole, setTargetRole] = useState("");
-  const [focusArea, setFocusArea] = useState("");
+  const [focusAreas, setFocusAreas] = useState<string[]>([]);
   const [timeline, setTimeline] = useState("2026 Batch");
   const [primaryGoal, setPrimaryGoal] = useState("");
 
-  const [morningHour, setMorningHour] = useState(8);
+  const [morningHour, setMorningHour] = useState(11);
   const [eveningHour, setEveningHour] = useState(20);
   const [eveningNotificationEnabled, setEveningNotificationEnabled] = useState(false);
+  const [showFreeTrialModal, setShowFreeTrialModal] = useState(false);
   const [tone, setTone] = useState<"friendly" | "direct" | "encouraging">("friendly");
   const [telegramUrl, setTelegramUrl] = useState<string | null>(null);
 
@@ -51,17 +59,41 @@ export const SettingsPage: React.FC = () => {
       setTimezone(profileData.profile.timezone || "Asia/Kolkata");
       setBranch(profileData.profile.branch || "");
       setTargetRole(profileData.profile.targetRole || "");
-      setFocusArea(profileData.profile.focusArea || "");
+      if (profileData.profile.focusArea) {
+        const parsed = profileData.profile.focusArea
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        setFocusAreas(parsed);
+      }
       setTimeline(profileData.profile.timeline || "2026 Batch");
       setPrimaryGoal(profileData.profile.primaryGoal || "");
     }
     if (profileData?.preferences) {
-      setMorningHour(profileData.preferences.morningHour ?? 8);
+      setMorningHour(profileData.preferences.morningHour ?? 11);
       setEveningHour(profileData.preferences.eveningHour ?? 20);
       setEveningNotificationEnabled(profileData.preferences.eveningNotificationEnabled ?? false);
       setTone(profileData.preferences.tone || "friendly");
     }
   }, [profileData]);
+
+  const handleAddFocusArea = (area: string) => {
+    if (area && !focusAreas.includes(area)) {
+      setFocusAreas((prev) => [...prev, area]);
+    }
+  };
+
+  const handleRemoveFocusArea = (areaToRemove: string) => {
+    setFocusAreas((prev) => prev.filter((a) => a !== areaToRemove));
+  };
+
+  const handleTimeChangeAttempt = (e?: React.SyntheticEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    setShowFreeTrialModal(true);
+    toast.error("You are not allowed to change the time under the free trial. Upgrade to change the time.");
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +104,7 @@ export const SettingsPage: React.FC = () => {
           timezone,
           branch: branch.trim() || null,
           targetRole: targetRole.trim() || null,
-          focusArea: focusArea.trim() || null,
+          focusArea: focusAreas.join(", ").trim() || null,
           timeline: timeline.trim() || null,
           primaryGoal: primaryGoal.trim() || null,
         }),
@@ -175,13 +207,23 @@ export const SettingsPage: React.FC = () => {
                 <GraduationCap className="w-3.5 h-3.5 text-indigo-400" />
                 Branch / Degree
               </label>
-              <input
-                type="text"
+              <select
                 value={branch}
                 onChange={(e) => setBranch(e.target.value)}
-                placeholder="e.g. 4th Year ECE, CSE"
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500"
-              />
+              >
+                <option value="" disabled>
+                  Select Branch / Degree
+                </option>
+                {branch && !BRANCH_OPTIONS.includes(branch as any) && (
+                  <option value={branch}>{branch}</option>
+                )}
+                {BRANCH_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -189,13 +231,23 @@ export const SettingsPage: React.FC = () => {
                 <Briefcase className="w-3.5 h-3.5 text-indigo-400" />
                 Target Role / Domain
               </label>
-              <input
-                type="text"
+              <select
                 value={targetRole}
                 onChange={(e) => setTargetRole(e.target.value)}
-                placeholder="e.g. Embedded Systems, Frontend Developer"
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500"
-              />
+              >
+                <option value="" disabled>
+                  Select Target Role / Domain
+                </option>
+                {targetRole && !TARGET_ROLE_OPTIONS.includes(targetRole as any) && (
+                  <option value={targetRole}>{targetRole}</option>
+                )}
+                {TARGET_ROLE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -205,13 +257,44 @@ export const SettingsPage: React.FC = () => {
                 <Target className="w-3.5 h-3.5 text-indigo-400" />
                 Current Focus Area
               </label>
-              <input
-                type="text"
-                value={focusArea}
-                onChange={(e) => setFocusArea(e.target.value)}
-                placeholder="e.g. Resume & Projects, DSA, Aptitude"
+              {focusAreas.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {focusAreas.map((area) => (
+                    <span
+                      key={area}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-950/70 border border-indigo-700/60 text-indigo-300 text-xs font-medium"
+                    >
+                      <span>{area}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFocusArea(area)}
+                        className="text-indigo-400 hover:text-red-400 transition"
+                        title="Remove focus area"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <select
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleAddFocusArea(e.target.value);
+                  }
+                }}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500"
-              />
+              >
+                <option value="" disabled>
+                  {focusAreas.length === 0 ? "Select focus area..." : "+ Add another focus area..."}
+                </option>
+                {FOCUS_AREA_OPTIONS.filter((opt) => !focusAreas.includes(opt)).map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -287,8 +370,12 @@ export const SettingsPage: React.FC = () => {
                 min={5}
                 max={12}
                 value={morningHour}
-                onChange={(e) => setMorningHour(Number(e.target.value))}
-                className="w-full accent-indigo-500"
+                onMouseDown={handleTimeChangeAttempt}
+                onTouchStart={handleTimeChangeAttempt}
+                onKeyDown={handleTimeChangeAttempt}
+                onChange={handleTimeChangeAttempt}
+                onInput={handleTimeChangeAttempt}
+                className="w-full accent-indigo-500 cursor-pointer"
               />
               <p className="text-[11px] text-slate-500 mt-1">
                 Your focused 15-minute daily micro-action arrives at this hour.
@@ -311,8 +398,22 @@ export const SettingsPage: React.FC = () => {
                 max={23}
                 disabled={!eveningNotificationEnabled}
                 value={eveningHour}
-                onChange={(e) => setEveningHour(Number(e.target.value))}
-                className="w-full accent-purple-500 disabled:cursor-not-allowed"
+                onMouseDown={(e) => {
+                  if (eveningNotificationEnabled) handleTimeChangeAttempt(e);
+                }}
+                onTouchStart={(e) => {
+                  if (eveningNotificationEnabled) handleTimeChangeAttempt(e);
+                }}
+                onKeyDown={(e) => {
+                  if (eveningNotificationEnabled) handleTimeChangeAttempt(e);
+                }}
+                onChange={(e) => {
+                  if (eveningNotificationEnabled) handleTimeChangeAttempt(e);
+                }}
+                onInput={(e) => {
+                  if (eveningNotificationEnabled) handleTimeChangeAttempt(e);
+                }}
+                className="w-full accent-purple-500 disabled:cursor-not-allowed cursor-pointer"
               />
               <p className="text-[11px] text-slate-500 mt-1">
                 {eveningNotificationEnabled
@@ -435,6 +536,56 @@ export const SettingsPage: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {/* Free Trial Restriction Modal */}
+      {showFreeTrialModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+          onClick={() => setShowFreeTrialModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl relative space-y-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-white">Free Trial Restriction</h3>
+                <p className="text-xs text-slate-400">Custom Schedule Delivery</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-slate-300 leading-relaxed">
+              You are not allowed to change the time under the free trial. Upgrade to change the time.
+            </p>
+
+            <div className="pt-2 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowFreeTrialModal(false)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition"
+              >
+                Got it
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowFreeTrialModal(false);
+                  toast.info("Pro tier upgrades opening soon!");
+                }}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold transition shadow-lg shadow-indigo-600/20"
+              >
+                Upgrade to change time
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
