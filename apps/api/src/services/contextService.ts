@@ -100,14 +100,18 @@ export async function storeMessageEmbedding(
   userId: string,
   content: string
 ): Promise<void> {
+  if (!content || !content.trim()) return;
   try {
     const vectorValues = await embedText(content);
     if (vectorValues.length > 0) {
-      await db.insert(messageEmbeddings).values({
-        messageId,
-        userId,
-        embedding: vectorValues,
-      });
+      await db
+        .insert(messageEmbeddings)
+        .values({
+          messageId,
+          userId,
+          embedding: vectorValues,
+        })
+        .onConflictDoNothing({ target: messageEmbeddings.messageId });
     }
   } catch (err) {
     logger.error({ err, messageId, userId }, "Failed to generate and store message embedding");

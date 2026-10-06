@@ -5,7 +5,8 @@ import { env, logger } from "./config.js";
 import { db } from "./db/index.js";
 import { linkTokens, telegramAccounts, profiles, messages } from "./db/schema.js";
 import { generateReply } from "./services/aiService.js";
-import { assembleUserContext } from "./services/contextService.js";
+import { assembleUserContext, triggerMemoryExtractionAndSummary } from "./services/contextService.js";
+import { runEmbeddingBackfillJob } from "./services/cronService.js";
 
 export const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
 
@@ -200,6 +201,9 @@ async function processPendingBatch(telegramUserId: number): Promise<void> {
     // 5. Send reply to Telegram
     await lastCtx.reply(aiReplyText);
 
+    // 6. Schedule post-conversation sync (sliding 2.5m inactivity debounce)
+    schedulePostConversationSync(userId);
+
     logger.info(
       { userId, telegramUserId, messageCount: texts.length },
       "Successfully processed and delivered debounced AI reply"
@@ -217,6 +221,31 @@ async function processPendingBatch(telegramUserId: number): Promise<void> {
       // Ignore secondary network reply errors
     }
   }
+}
+
+const sessionSyncTimers = new Map<string, NodeJS.Timeout>();
+
+function schedulePostConversationSync(userId: string): void {
+  const existingTimer = sessionSyncTimers.get(userId);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+  }
+
+  // Sliding 2.5-minute (150,000 ms) inactivity timer:
+  // Fires while the Render free-tier container is guaranteed to be awake (12.5 mins before sleep cutoff)
+  const timer = setTimeout(async () => {
+    sessionSyncTimers.delete(userId);
+    try {
+      logger.info({ userId }, "Executing post-conversation embedding and memory consolidation");
+      await runEmbeddingBackfillJob(50);
+      await triggerMemoryExtractionAndSummary(userId);
+      logger.info({ userId }, "Post-conversation embedding and memory consolidation finished");
+    } catch (err) {
+      logger.error({ err, userId }, "Failed in post-conversation consolidation");
+    }
+  }, 150000);
+
+  sessionSyncTimers.set(userId, timer);
 }
 
 bot.catch((err) => {

@@ -179,6 +179,7 @@ export async function extractMemories(recentText: string): Promise<{ key: string
 }
 
 export async function embedText(text: string): Promise<number[]> {
+  if (!text || !text.trim()) return [];
   for (const embModel of EMBEDDING_MODELS) {
     try {
       const model = genAI.getGenerativeModel({ model: embModel });

@@ -6,8 +6,8 @@ import { db } from "../db/index.js";
 import { messages, conversations } from "../db/schema.js";
 import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
 import { logger } from "../config.js";
-import { assembleUserContext, triggerMemoryExtractionAndSummary } from "../services/contextService.js";
-import { generateReply, embedText } from "../services/aiService.js";
+import { assembleUserContext, storeMessageEmbedding, triggerMemoryExtractionAndSummary } from "../services/contextService.js";
+import { generateReply } from "../services/aiService.js";
 import { messageEmbeddings } from "../db/schema.js";
 
 import { devMockStore, type MockMessage } from "../db/devStore.js";
@@ -112,19 +112,7 @@ router.post("/me/messages", requireAuth, async (req: AuthedRequest, res, next) =
     }
 
     // Background embedding creation for user message
-    embedText(content)
-      .then(async (embedding) => {
-        if (embedding.length > 0) {
-          await db.insert(messageEmbeddings).values({
-            messageId: userMsg.id,
-            userId,
-            embedding,
-          });
-        }
-      })
-      .catch((err) => {
-        logger.error({ err, messageId: userMsg.id }, "Failed to store user message embedding");
-      });
+    void storeMessageEmbedding(userMsg.id, userId, content);
 
     // 2. Assemble 4-layer context memory
     const assembledContext = await assembleUserContext(userId, content);
@@ -147,19 +135,7 @@ router.post("/me/messages", requireAuth, async (req: AuthedRequest, res, next) =
     }
 
     // Background embedding creation for assistant message
-    embedText(replyText)
-      .then(async (embedding) => {
-        if (embedding.length > 0) {
-          await db.insert(messageEmbeddings).values({
-            messageId: assistantMsg.id,
-            userId,
-            embedding,
-          });
-        }
-      })
-      .catch((err) => {
-        logger.error({ err, messageId: assistantMsg.id }, "Failed to store assistant message embedding");
-      });
+    void storeMessageEmbedding(assistantMsg.id, userId, replyText);
 
     // Background memory extraction
     triggerMemoryExtractionAndSummary(userId).catch((memErr) => {

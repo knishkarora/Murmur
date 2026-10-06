@@ -435,6 +435,8 @@ export async function runEmbeddingBackfillJob(limit = 50): Promise<{
       try {
         await storeMessageEmbedding(msg.id, msg.userId, msg.content);
         backfilled++;
+        // Throttle slightly (150ms) to stay within Gemini RPM bounds comfortably
+        await new Promise((r) => setTimeout(r, 150));
       } catch (err) {
         errors++;
         logger.error({ err, messageId: msg.id }, "Failed to backfill embedding for message");
@@ -458,7 +460,19 @@ export function initScheduler(): {
 } {
   logger.info("Registering background cron automation schedules for Asia/Kolkata (IST)...");
 
-  // Hourly runner: evaluates morning tasks and weekly summaries for matching users in IST
+  // Immediate startup catch-up: process any pending embeddings or summaries from prior sessions
+  void (async () => {
+    try {
+      logger.info("Executing startup catch-up: embedding backfill & rolling memory summarization...");
+      await runEmbeddingBackfillJob(100);
+      await runMemorySummarizeJob();
+      logger.info("Startup catch-up completed successfully");
+    } catch (err) {
+      logger.error({ err }, "Error during startup catch-up execution");
+    }
+  })();
+
+  // Hourly runner: evaluates morning tasks, evening checks, weekly summaries, and embedding sync for matching users in IST
   const hourlyTask = cron.schedule(
     "0 * * * *",
     async () => {
@@ -467,6 +481,7 @@ export function initScheduler(): {
         await runDailyMorningJob();
         await runDailyEveningJob();
         await runWeeklyPlannerJob();
+        await runEmbeddingBackfillJob();
       } catch (err) {
         logger.error({ err }, "Error in hourly cron task");
       }
