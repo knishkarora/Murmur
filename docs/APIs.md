@@ -16,7 +16,7 @@ Used for server health checking and external webhook inputs.
 
 | Method | Route | Description | Payload Schema | Response Schema |
 |--------|-------|-------------|----------------|-----------------|
-| `GET` | `/health` | Render health check | None | `{ "status": "ok" }` |
+| `GET`, `HEAD` | `/health`, `/api/health` | Health check & cron keep-alive (supports `?format=text` or `HEAD` for minimal 0-2B payloads) | None | `{ "status": "ok" }` or `OK` |
 | `POST` | `/webhooks/telegram` | Grammy bot webhook handler | Telegram Update | Void |
 
 #### Telegram Webhook

@@ -51,8 +51,18 @@ app.use(apiRouter);
 app.use("/api", apiRouter);
 
 // Public health check route (used by external cron to keep alive or pre-warm Render instance)
-app.get(["/health", "/api/health"], (_req, res) => {
-  res.json({
+app.all(["/health", "/api/health"], (req, res) => {
+  if (req.method === "HEAD") {
+    res.status(200).end();
+    return;
+  }
+
+  if (req.query.format === "text" || req.headers.accept === "text/plain") {
+    res.status(200).type("text/plain").send("OK");
+    return;
+  }
+
+  res.status(200).json({
     status: "ok",
     service: "api",
     timestamp: new Date().toISOString(),
