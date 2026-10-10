@@ -15,6 +15,28 @@ import { initScheduler } from "./services/cronService.js";
 
 const app = express();
 
+// ─── HEALTH CHECK ──────────────────────────────────────────────────────────────
+// Registered BEFORE helmet() and CORS so the cron-job.org wakeup ping gets a
+// bare-minimum response (no CSP / x-frame / x-* headers from Helmet, no CORS
+// headers).  Without this, the combined header + body byte count exceeds
+// cron-job.org's free-tier "output too large" buffer limit.
+// ──────────────────────────────────────────────────────────────────────────────
+app.all(["/health", "/api/health"], (req, res) => {
+  if (req.method === "HEAD") {
+    // Zero body bytes — absolute minimum response for HEAD-based monitors
+    res.status(200).end();
+    return;
+  }
+  if (req.query.format === "text" || req.headers.accept === "text/plain") {
+    // 2-byte plain-text for cron-job.org GET pings
+    res.status(200).type("text/plain").send("OK");
+    return;
+  }
+  // Default JSON (Render's own health-check dashboard / browser)
+  res.status(200).json({ status: "ok" });
+});
+
+// ─── GLOBAL MIDDLEWARE ────────────────────────────────────────────────────────
 app.use(helmet());
 app.use(
   cors({
@@ -37,7 +59,8 @@ app.use(
 );
 app.use(express.json());
 
-// API routes - support both direct (/me/...) and prefixed (/api/me/...)
+// ─── API ROUTES ───────────────────────────────────────────────────────────────
+// Support both direct (/me/...) and prefixed (/api/me/...) paths
 const apiRouter = express.Router();
 apiRouter.use(telegramRouter);
 apiRouter.use(preferencesRouter);
@@ -49,25 +72,6 @@ apiRouter.use(memoriesRouter);
 
 app.use(apiRouter);
 app.use("/api", apiRouter);
-
-// Public health check route (used by external cron to keep alive or pre-warm Render instance)
-app.all(["/health", "/api/health"], (req, res) => {
-  if (req.method === "HEAD") {
-    res.status(200).end();
-    return;
-  }
-
-  if (req.query.format === "text" || req.headers.accept === "text/plain") {
-    res.status(200).type("text/plain").send("OK");
-    return;
-  }
-
-  res.status(200).json({
-    status: "ok",
-    service: "api",
-    timestamp: new Date().toISOString(),
-  });
-});
 
 // Authenticated user check route
 app.get("/me", requireAuth, (req: AuthedRequest, res) => {
