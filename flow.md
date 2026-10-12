@@ -200,7 +200,7 @@ This document tracks execution flows across application boundaries in Murmur.
    - Payload submitted via `PATCH /me/profile` and `PATCH /me/preferences`.
    - Zod validation and Drizzle ORM store updated attributes, and `contextService.ts` supplies the updated values directly into Gemini system prompt memories.
 
-### Modified Scope (Current Session)
+### Modified Scope (Slice 7)
 - `[NEW]` [`packages/shared/src/constants/index.ts`](packages/shared/src/constants/index.ts): Curated constants for Branch, Target Role, and Focus Areas.
 - `[MODIFY]` [`packages/shared/src/index.ts`](packages/shared/src/index.ts), [`packages/shared/package.json`](packages/shared/package.json): Exported `./constants`.
 - `[MODIFY]` [`packages/shared/src/schemas/index.ts`](packages/shared/src/schemas/index.ts): Updated `morningHour` default to 11.
@@ -208,6 +208,33 @@ This document tracks execution flows across application boundaries in Murmur.
 - `[MODIFY]` [`apps/web/src/pages/OnboardingPage.tsx`](apps/web/src/pages/OnboardingPage.tsx): Branch and Target Role select dropdowns, multi-select tag chips for Focus Areas.
 - `[MODIFY]` [`apps/web/src/pages/SettingsPage.tsx`](apps/web/src/pages/SettingsPage.tsx): Standardized dropdowns, multi-select tag chips, Free Trial Restriction modal & toast on slider interaction, 11:00 AM morning default.
 - `[MODIFY]` [`apps/web/src/pages/DashboardPage.tsx`](apps/web/src/pages/DashboardPage.tsx): Morning nudge reminder string fallback to 11.
+
+---
+
+## 8. Visual-First Formatting & Emoji-Anchored Prompts Flow
+
+### Entry Point
+- User interacts via Telegram or Web chat, or scheduled cron jobs (`daily_morning`, `daily_evening`, `weekly_planner`) fire.
+
+### Execution Sequence
+1. **[shared] Prompt Assembly ([`prompts/index.ts`](packages/shared/src/prompts/index.ts)):**
+   - Injects explicit visual formatting instructions into `SYSTEM_PROMPT`, `DAILY_ACTION_PROMPT`, `EVENING_REFLECTION_PROMPT`, and `WEEKLY_SUMMARY_PROMPT`.
+   - Explicitly bans raw Markdown syntax: `#`/`##`/`###` headers, `**bold**`/`__italic__`, and `- ` markdown dash pointers.
+   - Enforces visual anchors using creative, unexpected emojis dynamically drawn from the entire emoji spectrum (avoiding repetitive fixed lists) and clean Unicode bullet symbols (`•`, `✦`, `➜`).
+   - Requires scannable short paragraphs (1-2 sentences) with whitespace breathing room.
+2. **[api] AI Generation ([`aiService.ts`](apps/api/src/services/aiService.ts)):**
+   - Gemini models generate responses guided by the visual constraints.
+   - Fallback error messages incorporate visual emoji indicators (`💭`, `🎯`, `🌿`, `🎉`).
+3. **[api] Telegram Delivery ([`cronService.ts`](apps/api/src/services/cronService.ts) & [`bot.ts`](apps/api/src/bot.ts)):**
+   - Outbound cron messages and bot replies are sent cleanly without raw asterisks in greeting headers.
+   - Avoids fragile legacy Markdown entity parse errors on Telegram, rendering rich UTF-8 emojis and bullets natively across desktop and mobile.
+
+### Modified Scope (Current Session)
+- `[MODIFY]` [`packages/shared/src/prompts/index.ts`](packages/shared/src/prompts/index.ts): Enhanced `SYSTEM_PROMPT`, `DAILY_ACTION_PROMPT`, `EVENING_REFLECTION_PROMPT`, and `WEEKLY_SUMMARY_PROMPT` with visual-first and emoji rules.
+- `[MODIFY]` [`apps/api/src/services/cronService.ts`](apps/api/src/services/cronService.ts): Removed raw double asterisks and fragile parse mode from cron message greetings.
+- `[MODIFY]` [`apps/api/src/services/aiService.ts`](apps/api/src/services/aiService.ts): Added emoji badges to fallback messages.
+- `[MODIFY]` [`docs/AI and Memory.md`](docs/AI and Memory.md), [`docs/Telegram Integration.md`](docs/Telegram Integration.md): Updated documentation to reflect visual formatting guidelines.
+
 
 
 

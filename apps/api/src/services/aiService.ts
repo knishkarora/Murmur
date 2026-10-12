@@ -120,7 +120,7 @@ export async function generateReply(context: AiContext, userMessage: string): Pr
     return await callGemini(prompt);
   } catch (err) {
     logger.error({ err }, "All Gemini reply models failed");
-    return "I'm having a brief moment — please try again in a minute. Your progress still counts.";
+    return "💭 I'm having a brief moment — please try again in a minute. Your progress still counts.";
   }
 }
 
@@ -132,7 +132,7 @@ export async function generateDailyAction(context: AiContext): Promise<string> {
     return await callGemini(prompt);
   } catch (err) {
     logger.error({ err }, "All Gemini daily action models failed");
-    return "Spend 15 minutes today reviewing your primary resume project or practicing one core technical concept.";
+    return "🎯 Spend 15 minutes today reviewing your primary resume project or practicing one core technical concept.";
   }
 }
 
@@ -148,7 +148,7 @@ export async function generateEveningReflection(context: AiContext): Promise<str
     return await callGemini(prompt);
   } catch (err) {
     logger.error({ err }, "All Gemini evening reflection models failed");
-    return "Hope your day went well. Remember, resting and taking things one day at a time is just as important as the hustle.";
+    return "🌿 Hope your day went well. Remember, resting and taking things one day at a time is just as important as the hustle.";
   }
 }
 
@@ -161,7 +161,7 @@ export async function generateWeeklySummary(context: AiContext, summaryStats?: s
     return await callGemini(prompt);
   } catch (err) {
     logger.error({ err }, "All Gemini weekly summary models failed");
-    return "Great effort this past week. Every consistent step, no matter how small, compounds toward your placement goals.";
+    return "🎉 Great effort this past week. Every consistent step, no matter how small, compounds toward your placement goals.";
   }
 }
 

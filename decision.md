@@ -131,4 +131,23 @@
   * Free trial time adjustment lock is enforced at the UI interaction boundary; comprehensive billing tier authorization checks will accompany Stripe integration.
 * **Immutability Status:** Settled & Immutable.
 
+---
+
+## [2026-10-12] Decision: Visual-First Formatting, Emoji Anchoring & Plain-Text Mobile Delivery
+
+* **Context & Scope:** Addressing user experience feedback where AI messages delivered via Telegram and web displayed raw technical Markdown artifacts (`**bold**`, `### headers`, `- pointers`), creating dense README-style walls of text that caused visual fatigue and reading disorientation.
+* **Choice Made:**
+  1. Update `SYSTEM_PROMPT` in `@companion/shared/prompts` to strictly ban raw Markdown headers (`#`, `##`, `###`), markdown bold/italic syntax (`**`, `__`), and plain markdown bullet hyphens (`-`).
+  2. Enforce creative, dynamic emoji expression drawing freely and unexpectedly from the entire emoji universe rather than a fixed list, using emojis as lively visual section anchors and milestones to guide eye movement and prevent repetitive boredom.
+  3. Enforce clean Unicode list symbols (`•`, `✦`, `➜`, `➤`) and short scannable paragraphs (1–2 sentences) with clean line breaks.
+  4. Synchronize `DAILY_ACTION_PROMPT`, `EVENING_REFLECTION_PROMPT`, and `WEEKLY_SUMMARY_PROMPT` with these visual guidelines.
+  5. Remove raw double-asterisk wrappers (`**Good morning!**`, `**Good evening!**`, `**Your Weekly Summary:**`) from Telegram cron greeting headers in `cronService.ts`, and send clean UTF-8 text to eliminate fragile Telegram Markdown entity parse failures and raw fallback artifacts.
+* **Rationale (Why over What):**
+  * Final-year students preparing for placements interact primarily via mobile Telegram notifications. Raw markdown renders as literal code characters on mobile when Telegram parse modes fail or when parsed by plain text views.
+  * Emojis provide instant visual orientation, allowing readers to digest advice, micro-actions, and reflections in seconds without cognitive load.
+  * Removing fragile `{ parse_mode: 'Markdown' }` guarantees 100% reliable message delivery on Telegram with native UTF-8 emoji and symbol rendering.
+* **Tradeoffs Accepted:**
+  * AI cannot use Markdown `**` bolding; natural emphasis is achieved via emojis, badges, and uppercase labels.
+* **Immutability Status:** Settled & Immutable.
+
 

@@ -101,25 +101,13 @@ export async function runDailyMorningJob(referenceDate: Date = new Date()): Prom
         try {
           await bot.api.sendMessage(
             user.chatId,
-            `☀️ **Good morning!** Here is your focus for today:\n\n${actionText}`,
-            { parse_mode: "Markdown" }
+            `☀️ Good morning! Here is your focus for today:\n\n${actionText}`
           );
         } catch (tgErr) {
-          logger.warn(
+          logger.error(
             { err: tgErr, userId: user.userId, chatId: user.chatId },
-            "Markdown send failed, falling back to plain text"
+            "Failed to dispatch daily morning action via Telegram"
           );
-          try {
-            await bot.api.sendMessage(
-              user.chatId,
-              `☀️ Good morning! Here is your focus for today:\n\n${actionText}`
-            );
-          } catch (fallbackErr) {
-            logger.error(
-              { err: fallbackErr, userId: user.userId },
-              "Failed to dispatch daily morning action via Telegram"
-            );
-          }
         }
       }
 
@@ -206,25 +194,13 @@ export async function runDailyEveningJob(referenceDate: Date = new Date()): Prom
         try {
           await bot.api.sendMessage(
             user.chatId,
-            `🌙 **Good evening!**\n\n${reflectionText}`,
-            { parse_mode: "Markdown" }
+            `🌙 Good evening!\n\n${reflectionText}`
           );
         } catch (tgErr) {
-          logger.warn(
+          logger.error(
             { err: tgErr, userId: user.userId, chatId: user.chatId },
-            "Markdown send failed for evening reflection, falling back to plain text"
+            "Failed to dispatch daily evening reflection via Telegram"
           );
-          try {
-            await bot.api.sendMessage(
-              user.chatId,
-              `🌙 Good evening!\n\n${reflectionText}`
-            );
-          } catch (fallbackErr) {
-            logger.error(
-              { err: fallbackErr, userId: user.userId },
-              "Failed to dispatch daily evening reflection via Telegram"
-            );
-          }
         }
       }
 
@@ -343,25 +319,13 @@ export async function runWeeklyPlannerJob(referenceDate: Date = new Date()): Pro
         try {
           await bot.api.sendMessage(
             user.chatId,
-            `📅 **Your Weekly Summary & Reflection:**\n\n${summaryText}`,
-            { parse_mode: "Markdown" }
+            `📅 Your Weekly Summary & Reflection:\n\n${summaryText}`
           );
         } catch (tgErr) {
-          logger.warn(
+          logger.error(
             { err: tgErr, userId: user.userId, chatId: user.chatId },
-            "Markdown weekly summary send failed, falling back to plain text"
+            "Failed to dispatch weekly summary via Telegram"
           );
-          try {
-            await bot.api.sendMessage(
-              user.chatId,
-              `📅 Your Weekly Summary & Reflection:\n\n${summaryText}`
-            );
-          } catch (fallbackErr) {
-            logger.error(
-              { err: fallbackErr, userId: user.userId },
-              "Failed to dispatch weekly summary via Telegram"
-            );
-          }
         }
       }
 

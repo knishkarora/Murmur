@@ -59,9 +59,13 @@ To build a persistent, contextual presence, user prompts are sent alongside four
 
 Prompt templates reside in [`prompts/index.ts`](../packages/shared/src/prompts/index.ts).
 
-- **`SYSTEM_PROMPT`:** Establishes persona (supportive, agency-focused, career coach for placement-seeking students, no guilt or streaking rules, Indian student context).
-- **`DAILY_ACTION_PROMPT`:** Context for generating a daily task (takes 10–30 mins max, specific, achievable today).
-- **`WEEKLY_SUMMARY_PROMPT`:** Context for Sunday summaries (focuses on wins/completions, warm encouragement, minimal next-week goals).
+- **`SYSTEM_PROMPT`:** Establishes persona (supportive, agency-focused, career companion for placement-seeking students, no guilt or streaking rules, Indian student context) and strict **Visual Formatting & Dynamic Emoji Rules**:
+  - Prohibits raw Markdown syntax (no `#`/`##`/`###` headers, no `**bold**`/`__italic__`, no `-`/`*` dashes) that look like technical README files.
+  - Mandates creative, dynamic emoji expression drawing freely and unexpectedly from the entire emoji universe rather than a repetitive fixed list, giving each section a unique visual identity and preventing reader disorientation.
+  - Enforces clean visual list symbols (`•`, `✦`, `➜`, `➤`) and scannable short paragraphs (1–2 sentences).
+- **`DAILY_ACTION_PROMPT`:** Context for generating a daily task (takes 10–30 mins max, specific, achievable today, dynamically chosen emoji anchor matching the specific task, no raw markdown headers/asterisks).
+- **`EVENING_REFLECTION_PROMPT`:** Context for gentle evening check-ins (under 80 words, diverse relaxing/cozy emojis drawn from the full palette, stress-free, validates rest equally).
+- **`WEEKLY_SUMMARY_PROMPT`:** Context for Sunday summaries (focuses on wins/completions, warm encouragement, minimal next-week goals, visual separation with celebratory emojis chosen dynamically to match achievements).
 - **`MEMORY_EXTRACT_PROMPT`:** Prompt that instructs the LLM to output a JSON list of key-value memories (e.g. `{"memories": [{"key": "goal", "value": " frontend internship"}]}`).
 
 ---

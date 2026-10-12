@@ -42,13 +42,13 @@ sequenceDiagram
    - Fetch the 4-layer context (history, memory key-values, rolling summary, semantic recall) via the AI Service.
    - Request Gemini `gemini-2.0-flash` to construct a response.
    - Save the AI response to the `messages` table (which triggers a dashboard refresh via Supabase Realtime).
-   - Deliver reply to the user via Grammy `ctx.reply()`.
+   - Deliver reply to the user via Grammy `ctx.reply()`. AI responses use visual-first formatting with emoji anchors and Unicode symbols, avoiding raw markdown syntax.
 
 ### 2. Outbound Cron Messages
 The scheduler triggers outbound alerts directly:
 1. Hourly cron checks database for users matching preferred alert times.
 2. Read the user's saved `chatId` from `telegram_accounts`.
-3. Call the Grammy instance `bot.api.sendMessage(chatId, text)` to push the notification.
+3. Call the Grammy instance `bot.api.sendMessage(chatId, text)` to push notifications cleanly formatted with Unicode symbols and emojis, without raw asterisks or fragile Markdown parse modes.
 
 ---
 

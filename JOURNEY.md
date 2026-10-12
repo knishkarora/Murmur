@@ -210,5 +210,26 @@ Ensures consistent user input taxonomy for AI prompt conditioning, allows studen
 - **Documentation Sync:**
   - Updated [`Architecture.md`](docs/Architecture.md) and [`Scheduling.md`](docs/Scheduling.md).
 
+---
+
+## 2026-10-12: Visual-First Formatting & Emoji-Anchored Prompting System
+
+### What was accomplished
+- **System Prompt Overhaul (`SYSTEM_PROMPT`):**
+  - Incorporated strict visual formatting guidelines prohibiting raw technical Markdown syntax (no `#`/`##`/`###` headers, no `**bold**`/`*italic*` asterisks, no `- ` markdown dash pointers).
+  - Mandated creative, dynamic emoji expression drawn freely and unexpectedly from the entire emoji universe (avoiding repetitive fixed lists) to visually anchor sections, convey nuance and feelings, guide eye movement, and keep interactions vibrant.
+  - Enforced clean Unicode bullet symbols (`•`, `✦`, `➜`, `➤`) and scannable short paragraph blocks (1–2 sentences) with ample whitespace breathing room.
+- **Specialized Prompt Harmonization:**
+  - Updated `DAILY_ACTION_PROMPT` to require motivating emoji badges and clean symbol steps without markdown headers.
+  - Updated `EVENING_REFLECTION_PROMPT` with cozy, calming visual framing emojis (🌙, ☕, 🌿, ✨) and zero markdown artifacts.
+  - Updated `WEEKLY_SUMMARY_PROMPT` to replace raw markdown formatting with celebration emojis (🎉, 🏆, 💡) and visual bullet items.
+- **Telegram Notification & Bot Dispatch Polish:**
+  - Removed raw double-asterisk wrappers (`**Good morning!**`, `**Good evening!**`, `**Your Weekly Summary:**`) from Telegram cron dispatchers in [`cronService.ts`](apps/api/src/services/cronService.ts).
+  - Cleaned up dispatch calls to send native UTF-8 text with emojis and Unicode symbols, eliminating fragile Telegram Markdown entity parsing failures and raw fallback leakage.
+  - Added visual emoji indicators to fallback messages in [`aiService.ts`](apps/api/src/services/aiService.ts).
+- **Documentation & Flow Sync:**
+  - Updated [`docs/AI and Memory.md`](docs/AI and Memory.md), [`docs/Telegram Integration.md`](docs/Telegram Integration.md), [`flow.md`](flow.md), and logged architectural decision in [`decision.md`](decision.md).
+
+
 
 
