@@ -21,7 +21,7 @@ const app = express();
 // headers).  Without this, the combined header + body byte count exceeds
 // cron-job.org's free-tier "output too large" buffer limit.
 // ──────────────────────────────────────────────────────────────────────────────
-app.all(["/health", "/api/health"], (req, res) => {
+app.all(["/", "/health", "/api/health"], (req, res) => {
   if (req.method === "HEAD") {
     // Zero body bytes — absolute minimum response for HEAD-based monitors
     res.status(200).end();
@@ -85,8 +85,8 @@ app.get("/me", requireAuth, (req: AuthedRequest, res) => {
 app.use(errorHandler);
 
 const port = env.PORT;
-app.listen(port, () => {
-  logger.info(`API server running on http://localhost:${port}`);
+app.listen(port, "0.0.0.0", () => {
+  logger.info(`API server running on http://0.0.0.0:${port}`);
   initScheduler();
 });
 

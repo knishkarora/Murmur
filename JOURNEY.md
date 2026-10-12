@@ -188,5 +188,27 @@ Murmur now runs reliably within the constraints of free-tier infrastructure. The
 ### Why this mattered
 Ensures consistent user input taxonomy for AI prompt conditioning, allows students to declare multiple focus areas at once, and protects schedule delivery configurations under free-trial business rules.
 
+---
+
+## 2026-10-12: Zero-Cost GitHub Actions Pre-Warming & Cold-Boot Resilience
+
+### What was accomplished
+- **Render Host & Endpoint Resilience:**
+  - Bound Express listener explicitly to `0.0.0.0:${PORT}` in `apps/api/src/index.ts` to ensure Render's Linux load balancer properly routes requests without immediate `502 Bad Gateway` connection drops.
+  - Added root `/` to health check routing (`app.all(["/", "/health", "/api/health"])`) returning ultra-lightweight 2-byte `OK` plain text responses.
+- **Automated GitHub Actions Scheduled Pre-Warming:**
+  - Authored [`.github/workflows/wake-render.yml`](.github/workflows/wake-render.yml) to eliminate reliance on external third-party cron tools.
+  - Configured cron triggers for Indian Standard Time (IST):
+    - 10:50 AM IST (`20 5 * * *` UTC) — 10 min prior to 11:00 AM morning action.
+    - 07:50 PM IST (`20 14 * * *` UTC) — 10 min prior to 08:00 PM evening reflection.
+    - 05:50 PM IST Sundays (`20 12 * * 0` UTC) — 10 min prior to 06:00 PM weekly planner.
+  - Implemented a 4-attempt curl loop with 60s max timeout and 15s delay between attempts to smoothly accommodate Render's ~40s cold start.
+  - Enabled `workflow_dispatch` for on-demand manual triggers from GitHub Actions UI.
+- **Resource & Compute Budget Verification:**
+  - Preserves sleeping behavior during idle hours, consuming only ~15–20 hours of Render compute per month (well within the 750 free hours).
+  - Uses ~60 minutes/month of GitHub Actions (~3% of the 2,000 free minutes allowance). Zero credit card required.
+- **Documentation Sync:**
+  - Updated [`Architecture.md`](docs/Architecture.md) and [`Scheduling.md`](docs/Scheduling.md).
+
 
 

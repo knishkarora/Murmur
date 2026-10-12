@@ -18,11 +18,17 @@ The background worker schedules several recurring jobs:
 
 ---
 
-## Render Free Tier & Pre-Warming Strategy
+## Render Free Tier & Pre-Warming via GitHub Actions
 
-Render's free tier spins down instances after **15 minutes** of inactivity. Because background `node-cron` timers are frozen while an instance sleeps:
-1. **Pre-Warming Wakeup:** An external pinger (e.g., [Cron-job.org](https://cron-job.org) or UptimeRobot) can ping `GET /health` or `GET /api/health` ~10 minutes prior to a scheduled hour (e.g., at 7:50 AM for an 8:00 AM delivery). This ensures the instance is warm and `node-cron` fires right on the hour.
-2. **Alternative Keep-Alive:** Pinging `/health` every 10–14 minutes keeps the free tier instance awake 24/7 without consuming API quota.
+Murmur's backend runs on **Render** (Free Tier Web Service), which spins down after 15 minutes of inactivity to save compute.
+To ensure the backend is awake when scheduled `node-cron` routines fire:
+1. **GitHub Actions Scheduled Workflow:** [`.github/workflows/wake-render.yml`](../.github/workflows/wake-render.yml) runs automatically:
+   - **10:50 AM IST** (`20 5 * * *` UTC) — 10 minutes prior to the 11:00 AM daily morning action.
+   - **07:50 PM IST** (`20 14 * * *` UTC) — 10 minutes prior to the 08:00 PM evening reflection.
+   - **05:50 PM IST Sundays** (`20 12 * * 0` UTC) — 10 minutes prior to the 06:00 PM weekly planner.
+2. **Cold-Boot Retry Loop:** The workflow pings `GET /health?format=text` with a 60-second timeout and automatic retries. When Render boots from cold sleep (~40s), the workflow catches it and exits with code 0 once `200 OK` is returned.
+3. **Compute Efficiency:** The instance stays awake for ~15–20 minutes around scheduled delivery windows and sleeps during idle hours, consuming only ~15–20 hours of Render compute per month out of the 750 free hours.
+4. **GitHub Actions Free Quota:** 2 runs/day consume ~60–65 minutes per month (~3% of the 2,000 free monthly minutes).
 
 ## Timezone Translation & Evaluation
 

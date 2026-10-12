@@ -96,10 +96,11 @@ We prioritize using established libraries to reduce custom boilerplate.
 
 ## Deployment & Hosting
 
-### Render for API Worker (Persistent)
-Why Render instead of Vercel for the backend?
-1. **Telegram Webhooks:** Webhook responders require quick execution without serverless warm-up latency.
-2. **Cron Scheduler:** `node-cron` runs in-process hourly loop checking user timezone execution windows. Serverless functions cannot support long-running, in-memory cron schedulers and will time out.
+### Render for API Worker (On-Demand with GitHub Actions Pre-Warming)
+Why Render for the backend?
+1. **Telegram Webhooks:** Handles incoming user messages and questions.
+2. **Cron Scheduler:** `node-cron` executes morning/evening notifications. The service is pre-warmed via scheduled GitHub Actions before notification windows, then sleeps during idle hours to conserve monthly compute hours.
+3. **Free Tier:** Render provides 750 free instance hours per calendar month. With scheduled pre-warming, the service only consumes ~15–20 hours/month.
 
 ### Vercel for Web Frontend (Static SPA)
 Vercel hosts the React SPA statically, distributing assets globally for instant loading.

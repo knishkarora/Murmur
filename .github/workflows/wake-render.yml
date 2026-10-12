@@ -1,0 +1,46 @@
+name: Pre-warm Render Backend
+
+on:
+  schedule:
+    # GitHub Actions cron runs in UTC.
+    # IST is UTC + 5:30.
+    - cron: '20 5 * * *'   # 10:50 AM IST (10 min before 11:00 AM morning action)
+    - cron: '20 14 * * *'  # 07:50 PM IST (10 min before 08:00 PM evening reflection)
+    - cron: '20 12 * * 0'  # 05:50 PM IST on Sundays (10 min before 06:00 PM weekly planner)
+  workflow_dispatch:        # Allows manual trigger anytime from GitHub Actions tab
+
+jobs:
+  pre-warm:
+    name: Wake up Render Service
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping Render Backend Health Endpoint
+        run: |
+          URL="https://murmur-86lm.onrender.com/health?format=text"
+          MAX_ATTEMPTS=4
+          SLEEP_SECONDS=15
+
+          echo "Initiating pre-warming request for: $URL"
+
+          for attempt in $(seq 1 $MAX_ATTEMPTS); do
+            echo "--- Attempt $attempt of $MAX_ATTEMPTS ---"
+            
+            # Send HTTP request with up to 60-second timeout to allow Render container cold boot
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$URL" || echo "000")
+            echo "Response status code: $HTTP_CODE"
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Success: Render instance is awake and responsive!"
+              exit 0
+            fi
+
+            if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+              echo "Instance is booting up. Retrying in ${SLEEP_SECONDS}s..."
+              sleep $SLEEP_SECONDS
+            fi
+          done
+
+          echo "❌ Error: Render service did not return 200 OK within $MAX_ATTEMPTS attempts."
+          exit 1
