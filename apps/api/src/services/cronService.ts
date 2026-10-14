@@ -424,13 +424,42 @@ export function initScheduler(): {
 } {
   logger.info("Registering background cron automation schedules for Asia/Kolkata (IST)...");
 
-  // Immediate startup catch-up: process any pending embeddings or summaries from prior sessions
+  // Immediate startup catch-up: when Render boots (e.g., from a GitHub Actions
+  // pre-warm ping), check if any scheduled deliveries are pending for today.
+  // The grace window SQL + jobRuns idempotency lock guarantees each job fires
+  // at most once per user per day, so calling these on every boot is safe.
   void (async () => {
     try {
-      logger.info("Executing startup catch-up: embedding backfill & rolling memory summarization...");
+      const now = new Date();
+      const zoned = toZonedTime(now, INDIA_TIMEZONE);
+      const currentHour = zoned.getHours();
+
+      logger.info(
+        { currentIstHour: currentHour },
+        "Startup catch-up: checking for pending scheduled deliveries and background jobs..."
+      );
+
+      // Attempt all delivery jobs — the grace window SQL filters out
+      // irrelevant hours, and jobRuns prevents duplicates
+      const [morning, evening, weekly] = await Promise.allSettled([
+        runDailyMorningJob(now),
+        runDailyEveningJob(now),
+        runWeeklyPlannerJob(now),
+      ]);
+
+      logger.info(
+        {
+          morning: morning.status === "fulfilled" ? morning.value : morning.reason?.message,
+          evening: evening.status === "fulfilled" ? evening.value : evening.reason?.message,
+          weekly: weekly.status === "fulfilled" ? weekly.value : weekly.reason?.message,
+        },
+        "Startup delivery catch-up completed"
+      );
+
+      // Background maintenance jobs (embeddings + memory summarization)
       await runEmbeddingBackfillJob(100);
       await runMemorySummarizeJob();
-      logger.info("Startup catch-up completed successfully");
+      logger.info("Startup background maintenance catch-up completed");
     } catch (err) {
       logger.error({ err }, "Error during startup catch-up execution");
     }

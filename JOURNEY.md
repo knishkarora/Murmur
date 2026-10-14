@@ -230,6 +230,29 @@ Ensures consistent user input taxonomy for AI prompt conditioning, allows studen
 - **Documentation & Flow Sync:**
   - Updated [`docs/AI and Memory.md`](docs/AI and Memory.md), [`docs/Telegram Integration.md`](docs/Telegram Integration.md), [`flow.md`](flow.md), and logged architectural decision in [`decision.md`](decision.md).
 
+---
 
+## 2026-10-14: Hybrid cron-job.org + GitHub Actions Pre-Warming Architecture
+
+### What was accomplished
+- **Hybrid Bridge Architecture:**
+  - Combined cron-job.org's exact-minute scheduling precision with GitHub Actions' long-running runner capabilities.
+  - cron-job.org sends a lightweight `POST` to GitHub's REST API (`/actions/workflows/wake-render.yml/dispatches`) which returns `204 No Content` in under 500ms — well within cron-job.org's 10s timeout limit.
+  - GitHub Actions immediately runs the workflow via the on-demand API queue, executing a 90-second curl loop to wake Render free-tier from cold boot (~50s).
+- **Workflow & Backend Cleanup:**
+  - Streamlined [`.github/workflows/wake-render.yml`](.github/workflows/wake-render.yml) to clean `workflow_dispatch` only, removing unnecessary schedule triggers.
+  - Restored clean exact-hour notification delivery in [`cronService.ts`](apps/api/src/services/cronService.ts) so users receive messages strictly at their preferred hour (e.g. 11:00 AM, 8:00 PM), while retaining startup catch-up as a fallback.
+- **Documentation Sync:**
+  - Updated [`Scheduling.md`](docs/Scheduling.md) with complete cron-job.org setup guide and headers.
+  - Updated [`Architecture.md`](docs/Architecture.md).
+
+### Why this mattered
+Solves both fundamental free-tier infrastructure blockers simultaneously:
+1. cron-job.org's short client timeout (10–15s) is completely bypassed because it targets GitHub API (sub-second response).
+2. GitHub Actions' multi-hour cron queue delay is completely bypassed because `workflow_dispatch` executes immediately on demand.
+3. Users receive notifications right on the hour without artificial wide delivery windows.
+
+### Decisions
+- **cron-job.org → GitHub API → Render:** Zero credit card required, consumes only ~60 GitHub Actions minutes/month (3% of free tier), and preserves Render idle sleep (~15–20 hours/month).
 
 

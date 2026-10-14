@@ -6,58 +6,91 @@ Murmur runs scheduled background cron processes using **node-cron** within the p
 
 ## Job Schedules
 
-The background worker schedules several recurring jobs:
+The background worker schedules several recurring jobs pinned to **Asia/Kolkata (IST)**:
 
 | Job Name | Trigger Frequency | Scope / Logic | Status |
 |----------|-------------------|---------------|--------|
-| `daily_morning` | Every Hour (00 min) | Queries users whose current timezone local time is between **8 AM and 9 AM** (default or preferred hour) and generates a daily action task. | **Active** |
-| `daily_evening` | Every Hour (00 min) | Queries users with `eveningNotificationEnabled: true` whose preferred evening hour matches the current local hour, generating a gentle reflection prompt. | **Active (Opt-in)** |
-| `weekly_planner` | Every Hour (00 min) | Runs on Sundays. Queries users whose current timezone local time is **6 PM** and generates a weekly summary + upcoming plan. | **Active** |
-| `memory_summarize` | Nightly at 2 AM UTC | Aggregates user logs and generates the updated conversation rolling summary. | **Active** |
-| `embedding_backfill` | Nightly at 3 AM UTC | Runs vector calculations on any unprocessed database messages. | **Active** |
+| `daily_morning` | Hourly (00 min) + Startup | Queries users whose preferred `morningHour` (default 8 AM IST) matches the current IST hour and generates a daily action task. Idempotent via `job_runs`. | **Active** |
+| `daily_evening` | Hourly (00 min) + Startup | Queries users with `eveningNotificationEnabled: true` whose preferred `eveningHour` (default 8 PM IST) matches the current IST hour. Idempotent via `job_runs`. | **Active (Opt-in)** |
+| `weekly_planner` | Hourly (00 min) + Startup | Runs at 6:00 PM IST on user's chosen day (default Sunday) and generates weekly summary + upcoming plan. Idempotent via `job_runs`. | **Active** |
+| `memory_summarize` | Nightly at 2:00 AM IST + Startup | Aggregates user logs and generates the updated conversation rolling summary. | **Active** |
+| `embedding_backfill` | Nightly at 3:00 AM IST + Startup | Runs vector calculations on any unprocessed database messages. | **Active** |
 
 ---
 
-## Render Free Tier & Pre-Warming via GitHub Actions
+## Render Free Tier & The Hybrid Trigger Architecture
 
 Murmur's backend runs on **Render** (Free Tier Web Service), which spins down after 15 minutes of inactivity to save compute.
-To ensure the backend is awake when scheduled `node-cron` routines fire:
-1. **GitHub Actions Scheduled Workflow:** [`.github/workflows/wake-render.yml`](../.github/workflows/wake-render.yml) runs automatically:
-   - **10:50 AM IST** (`20 5 * * *` UTC) — 10 minutes prior to the 11:00 AM daily morning action.
-   - **07:50 PM IST** (`20 14 * * *` UTC) — 10 minutes prior to the 08:00 PM evening reflection.
-   - **05:50 PM IST Sundays** (`20 12 * * 0` UTC) — 10 minutes prior to the 06:00 PM weekly planner.
-2. **Cold-Boot Retry Loop:** The workflow pings `GET /health?format=text` with a 60-second timeout and automatic retries. When Render boots from cold sleep (~40s), the workflow catches it and exits with code 0 once `200 OK` is returned.
-3. **Compute Efficiency:** The instance stays awake for ~15–20 minutes around scheduled delivery windows and sleeps during idle hours, consuming only ~15–20 hours of Render compute per month out of the 750 free hours.
-4. **GitHub Actions Free Quota:** 2 runs/day consume ~60–65 minutes per month (~3% of the 2,000 free monthly minutes).
 
-## Timezone Translation & Evaluation
+### Why Direct Cron Fails:
+1. **Direct cron-job.org to Render:** Fails because cron-job.org has a 10–15s client timeout, whereas Render takes ~50–60s to cold-boot.
+2. **Native GitHub Actions Cron (`schedule`):** Fails because GitHub's free-tier scheduled queue is routinely delayed by 5–8 hours.
 
-Since users live in different timezones (e.g. `Asia/Kolkata`, `America/New_York`), a standard single-time cron run does not work.
+### The Solution: cron-job.org + GitHub Actions `workflow_dispatch`
 
-### Execution Pattern:
-1. The Express server registers a cron task executing **every hour** (e.g. `0 * * * *`).
-2. Upon execution, the worker:
-   - Gets the current UTC timestamp.
-   - Runs a query checking user profiles/preferences to calculate their current local time hour using `date-fns-tz`.
-   - Filters users whose local hour matches the target execution hour (e.g. `8` for morning notifications).
-3. Executes operations strictly for the matching user cohort.
+We combine the precision of cron-job.org with the long-running execution power of GitHub Actions:
+
+```mermaid
+flowchart LR
+  CJ["cron-job.org<br/>(Exact timing, 0s delay)"]
+  GH["GitHub API<br/>(workflow_dispatch)"]
+  GHA["GitHub Actions Runner<br/>(up to 90s curl loop)"]
+  RND["Render Backend<br/>(wakes in ~50s)"]
+  BOT["Telegram Bot<br/>(sends on the hour)"]
+
+  CJ -- "POST (completes in 500ms)" --> GH
+  GH -- "triggers immediately" --> GHA
+  GHA -- "curl --max-time 90 /health" --> RND
+  RND -- "node-cron fires at :00" --> BOT
+```
+
+1. **cron-job.org** sends a lightweight `POST` request to the GitHub REST API at the exact minute (e.g. 10:50 AM IST and 07:50 PM IST).
+2. The GitHub API responds in **< 1 second** (`204 No Content`), well within cron-job.org's timeout limit.
+3. GitHub Actions immediately starts [`wake-render.yml`](../.github/workflows/wake-render.yml) via the on-demand API queue (bypassing the slow cron queue).
+4. The GitHub runner runs a 90-second curl loop, patiently waiting for Render's container to cold boot (~50s).
+5. Render wakes up and is fully warm. At the top of the hour (e.g. 11:00 AM / 8:00 PM), `node-cron` fires and dispatches notifications to Telegram right on time.
+6. Render goes back to sleep 15 minutes later, consuming only ~15–20 hours of Render compute per month.
+
+---
+
+## Setup Guide: cron-job.org Integration
+
+### 1. Create a GitHub Personal Access Token (PAT)
+1. Go to GitHub **Settings** → **Developer Settings** → **Personal Access Tokens** → **Fine-grained tokens** (or Tokens Classic).
+2. Generate a new token with:
+   - **Repository access:** `knishkarora/Murmur`
+   - **Permissions:** **Actions** (Read and Write).
+3. Copy the token.
+
+### 2. Configure Jobs in cron-job.org
+Create jobs for your pre-warm schedule (10 minutes before delivery hours):
+
+| Schedule (IST) | Target Delivery | Purpose |
+| :--- | :--- | :--- |
+| **10:50 AM daily** | 11:00 AM IST | Morning Action pre-warm |
+| **07:50 PM daily** | 08:00 PM IST | Evening Reflection pre-warm |
+| **05:50 PM Sundays** | 06:00 PM IST | Weekly Planner pre-warm |
+
+For each job in cron-job.org:
+* **URL:** `https://api.github.com/repos/knishkarora/Murmur/actions/workflows/wake-render.yml/dispatches`
+* **Request Method:** `POST`
+* **Request Headers:**
+  * `Authorization`: `Bearer YOUR_GITHUB_PAT`
+  * `Accept`: `application/vnd.github+json`
+  * `User-Agent`: `cron-job-org`
+  * `Content-Type`: `application/json`
+* **Request Body:**
+  ```json
+  {"ref": "main"}
+  ```
 
 ---
 
 ## Idempotency & Fail-Safe Mechanics
 
-To prevent duplicate alerts if the backend restarts or experiences network retries, we use the database `job_runs` table as a locking mechanism.
-
-### The Locking Flow:
-1. Before pushing a Telegram message or triggering an LLM generation, the scheduler attempts to insert a record into `job_runs`:
-   ```sql
-   INSERT INTO job_runs (job_type, user_id, run_date)
-   VALUES ('daily_morning', 'user-uuid', '2026-07-21');
-   ```
-2. **Unique Index Guard:** The `job_runs` table contains a unique index on `(job_type, user_id, run_date)`.
-3. **Outcome:**
-   - If the insert succeeds: The job has not run yet. Execute the action and send the message.
-   - If the insert fails (violates unique constraint): The job already ran for this user today. Silently skip execution.
+To prevent duplicate alerts if the backend restarts or is pinged multiple times, we use the database `job_runs` table as an idempotency lock:
+* Before dispatching, the scheduler attempts an `INSERT INTO job_runs (job_type, user_id, run_date)`.
+* A unique index on `(job_type, user_id, run_date)` guarantees that each user receives at most one notification per job type per day.
 
 ---
 

@@ -96,11 +96,12 @@ We prioritize using established libraries to reduce custom boilerplate.
 
 ## Deployment & Hosting
 
-### Render for API Worker (On-Demand with GitHub Actions Pre-Warming)
+### Render for API Worker (On-Demand with Hybrid Pre-Warming)
 Why Render for the backend?
 1. **Telegram Webhooks:** Handles incoming user messages and questions.
-2. **Cron Scheduler:** `node-cron` executes morning/evening notifications. The service is pre-warmed via scheduled GitHub Actions before notification windows, then sleeps during idle hours to conserve monthly compute hours.
-3. **Free Tier:** Render provides 750 free instance hours per calendar month. With scheduled pre-warming, the service only consumes ~15–20 hours/month.
+2. **Cron Scheduler:** `node-cron` executes morning/evening notifications on exact hours.
+3. **Hybrid Pre-Warming:** cron-job.org sends an exact-minute `POST` to GitHub's `workflow_dispatch` API (<500ms response). GitHub Actions immediately runs a 90-second curl loop to wake Render from cold boot (~50s). Render is warm right on time for `node-cron` delivery.
+4. **Free Tier:** Consumes only ~15–20 hours/month of Render compute and ~60 minutes/month of GitHub Actions (~3% of the 2,000 free quota). Zero credit card required.
 
 ### Vercel for Web Frontend (Static SPA)
 Vercel hosts the React SPA statically, distributing assets globally for instant loading.
